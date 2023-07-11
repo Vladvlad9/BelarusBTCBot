@@ -249,7 +249,7 @@ class MainForms:
 
                     price_BTC: float = await Cryptocurrency.get_btc()
                     buy: float = round(float(message.text) * price_BTC, 8)
-
+                    await state.update_data(buy=buy)
                     text = f"Сумма к получению: {message.text} {get_state_data['coin']}\n" \
                            f"Сумма к оплате: {buy} {get_state_data['currency_abbreviation']}\n\n" \
                            f"📝Введите {get_state_data['coin']}-адрес кошелька, " \
