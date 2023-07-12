@@ -33,11 +33,11 @@ async def registration_starts(message: types.Message):
 
 @dp.message_handler(commands=["start"])
 async def registration_start(message: types.Message):
-    # captcha_text = ''.join([random.choice(string.ascii_letters) for _ in range(6)])
-    # CONFIG.CAPTCHA = captcha_text
-    # file_path = create_captcha(captcha_text)
-    # await bot.send_photo(message.chat.id, open(file_path, 'rb'))
-    await message.answer(text="Приветствие!", reply_markup=await MainForms.main_ikb())
+    captcha_text = ''.join([random.choice(string.ascii_letters) for _ in range(6)])
+    CONFIG.CAPTCHA = captcha_text
+    file_path = create_captcha(captcha_text)
+    await bot.send_photo(message.chat.id, open(file_path, 'rb'))
+    #await message.answer(text="Приветствие!", reply_markup=await MainForms.main_ikb())
 
 
 @dp.message_handler()
