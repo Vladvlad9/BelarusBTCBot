@@ -124,9 +124,9 @@ class MainForms:
 
         data = {
             "Bitcoin": {"target": target, "action": action, "id": "Bitcoin", "editId": 0},
-            "❌Litecoin": {"target": target, "action": action, "id": "Litecoin", "editId": 0},
-            "❌USDT(trc20)": {"target": target, "action": action, "id": "USDT(trc20)", "editId": 0},
-            "❌Monero(XMR)": {"target": target, "action": action, "id": "Monero(XMR)", "editId": 0},
+            "Litecoin": {"target": target, "action": action, "id": "Litecoin", "editId": 0},
+            "USDT(trc20)": {"target": target, "action": action, "id": "USDT(trc20)", "editId": 0},
+            "Monero(XMR)": {"target": target, "action": action, "id": "Monero(XMR)", "editId": 0},
         }
 
         return InlineKeyboardMarkup(
