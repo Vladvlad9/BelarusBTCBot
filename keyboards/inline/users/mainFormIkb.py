@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from aiogram.dispatcher import FSMContext
@@ -14,6 +15,17 @@ main_cb = CallbackData("main", "target", "action", "id", "editId")
 
 
 class MainForms:
+
+    @staticmethod
+    async def confirmation_timer(message):
+        await asyncio.sleep(10)
+        await message.answer(text="Ваша заявка уже обрабатывается как только она будет "
+                                  "выполнена мы вам сообщим.\n\n"
+                                  "Если вам не сообщили в течение 15 мин. Обратитесь к оператору. "
+                                  "Он быстро все решит.\n\n"
+                                  "Спасибо что выбрали нас 🤗✌️\n\n"
+                                  "🚀 Желаем Вам отличного настроения!")
+
     @staticmethod
     async def abbreviation(coin: str):
         data = {
@@ -22,23 +34,56 @@ class MainForms:
             "USDT(trc20)": "usdt",
             "Monero(XMR)": "xmr",
             "RUB": "₽",
-            "BUN": "Br",
+            "BYN": "Br",
         }
         if coin in data:
             return data[coin]
 
     @staticmethod
-    async def bue(coin: str, currency: str, amount: str):
-        if coin == "RUB":
-            price_BTC: float = await Cryptocurrency.get_btc()
-            buy: float = round(float(amount) * price_BTC, 8)
-            return buy
+    async def buy(coin: str, currency: str, amount: str):
+        if currency == "RUB":
+            rub = await Cryptocurrency.get_rub()
+            if coin == "Bitcoin":
+                price_BTC: float = await Cryptocurrency.get_btc()
+                buy: float = round(float(amount) * price_BTC * rub, 8)
+                return buy
 
-        elif coin == "BYN":
-            price_BTC: float = await Cryptocurrency.get_btc()
-            buy: float = round(float(amount) * price_BTC, 8)
+            elif coin == "Litecoin":
+                get_ltc = await Cryptocurrency.get_ltc_to_rub()
+                buy: float = round(float(amount) * get_ltc, 8)
+                return buy
 
-            return buy
+            elif coin == "USDT(trc20)":
+                get_trc: float = await Cryptocurrency.get_trx()
+                buy: float = round(float(amount) * get_trc * rub, 8)
+                return buy
+
+            elif coin == "Monero(XMR)":
+                get_xmr: float = await Cryptocurrency.get_trx()
+                buy: float = round(float(amount) * get_xmr * rub, 8)
+                return buy
+
+        elif currency == "BYN":
+            byn = await Cryptocurrency.get_byn()
+            if coin == "Bitcoin":
+                price_BTC: float = await Cryptocurrency.get_btc()
+                buy: float = round(float(amount) * price_BTC * byn, 8)
+                return buy
+
+            elif coin == "Litecoin":
+                get_ltc: float = await Cryptocurrency.get_ltc()
+                buy: float = round(float(amount) * get_ltc * byn, 8)
+                return buy
+
+            elif coin == "USDT(trc20)":
+                get_trc: float = await Cryptocurrency.get_trx()
+                buy: float = round(float(amount) * get_trc * byn, 8)
+                return buy
+
+            elif coin == "Monero(XMR)":
+                get_xmr: float = await Cryptocurrency.get_xmr()
+                buy: float = round(float(amount) * get_xmr * byn, 8)
+                return buy
 
     @staticmethod
     async def main_ikb() -> InlineKeyboardMarkup:
@@ -64,7 +109,7 @@ class MainForms:
             inline_keyboard=[
                 [
                     InlineKeyboardButton(text="BYN",
-                                         callback_data=main_cb.new(target, action, "BUN", 0)),
+                                         callback_data=main_cb.new(target, action, "BYN", 0)),
                     InlineKeyboardButton(text="RUB",
                                          callback_data=main_cb.new(target, action, "RUB", 0))
                 ],
@@ -210,7 +255,7 @@ class MainForms:
                     elif data.get('action') == "confirmation_buy":
                         await callback.message.edit_text(text="📸 Загрузите изображение подтверждающее оплату!\n"
                                                               "(до 2 Мб)")
-                        #await UserStates.UserPhoto.set()
+                        await UserStates.UserPhoto.set()
 
                 elif data.get("target") == "Sell":
                     if data.get("action") == "getSell":
@@ -247,8 +292,10 @@ class MainForms:
                     get_state_data = await state.get_data()
                     abbreviation = await MainForms.abbreviation(get_state_data['coin'])
 
-                    price_BTC: float = await Cryptocurrency.get_btc()
-                    buy: float = round(float(message.text) * price_BTC, 8)
+                    buy = await MainForms.buy(coin=get_state_data['coin'],
+                                              currency=get_state_data['currency'],
+                                              amount=get_state_data['amount'])
+
                     await state.update_data(buy=buy)
                     text = f"Сумма к получению: {message.text} {get_state_data['coin']}\n" \
                            f"Сумма к оплате: {buy} {get_state_data['currency_abbreviation']}\n\n" \
@@ -276,4 +323,38 @@ class MainForms:
                                          reply_markup=await MainForms.confirmation_ikb(target="Buy",
                                                                                        action="confirmation_buy"),
                                          parse_mode="HTML")
-                    #await state.finish()
+
+                elif await state.get_state() == "UserStates:UserPhoto":
+                    if message.content_type == "photo":
+                        if message.photo[0].file_size > 2000:
+                            await message.answer(text="Картинка превышает 2 мб\n"
+                                                      "Попробуйте загрузить еще раз")
+                            await UserStates.UserPhoto.set()
+                        else:
+                            get_photo = await bot.get_file(message.photo[len(message.photo) - 1].file_id)
+                            photo = message.photo[0].file_id
+
+                            try:
+                                await bot.download_file(file_path=get_photo.file_path,
+                                                        destination=f'user_check/{1}_{message.from_user.id}.jpg',
+                                                        timeout=12,
+                                                        chunk_size=1215000)
+
+                                state_data = await state.get_data()
+                                text = f"Заявка № {1}\n\n" \
+                                       f"Имя {message.from_user.first_name}\n" \
+                                       f"Получено {state_data['currency_abbreviation']}: {state_data['buy']}\n" \
+                                       f"Нужно отправить  {state_data['coin']}: {state_data['amount']}\n" \
+                                       f"Кошелёк: {state_data['wallet']}"
+
+                                tasks = []
+                                for admin in CONFIG.BOT.ADMINS:
+                                    tasks.append(bot.send_photo(chat_id=admin, photo=photo,
+                                                                caption=f"Пользователь оплатил!\n\n"
+                                                                        f"{text}"))
+                                await asyncio.gather(*tasks, return_exceptions=True)  # Отправка всем админам сразу
+                                await MainForms.confirmation_timer(message=message)
+
+                                await state.finish()
+                            except Exception as e:
+                                logging.error(f'Error UserStates:UserPhoto: {e}')

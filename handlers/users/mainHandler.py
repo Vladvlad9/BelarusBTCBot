@@ -26,13 +26,18 @@ def create_captcha(text: str) -> str:
     return file_path
 
 
+@dp.message_handler(commands=["start"], state=UserStates.all_states)
+async def registration_starts(message: types.Message):
+    await message.answer(text="Приветствие!", reply_markup=await MainForms.main_ikb())
+
+
 @dp.message_handler(commands=["start"])
 async def registration_start(message: types.Message):
-    captcha_text = ''.join([random.choice(string.ascii_letters) for _ in range(6)])
-    CONFIG.CAPTCHA = captcha_text
-    file_path = create_captcha(captcha_text)
-    await bot.send_photo(message.chat.id, open(file_path, 'rb'))
-    #await message.answer(text="Приветствие!", reply_markup=await MainForms.main_ikb())
+    # captcha_text = ''.join([random.choice(string.ascii_letters) for _ in range(6)])
+    # CONFIG.CAPTCHA = captcha_text
+    # file_path = create_captcha(captcha_text)
+    # await bot.send_photo(message.chat.id, open(file_path, 'rb'))
+    await message.answer(text="Приветствие!", reply_markup=await MainForms.main_ikb())
 
 
 @dp.message_handler()
@@ -53,6 +58,6 @@ async def process_callback(callback: types.CallbackQuery, state: FSMContext = No
     await MainForms.process(callback=callback, state=state)
 
 
-@dp.message_handler(state=UserStates.all_states, content_types=["text"])
+@dp.message_handler(state=UserStates.all_states, content_types=["text", "photo"])
 async def process_message(message: types.Message, state: FSMContext):
     await MainForms.process(message=message, state=state)
