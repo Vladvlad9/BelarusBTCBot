@@ -86,6 +86,76 @@ class MainForms:
                 return buy
 
     @staticmethod
+    async def buy_to_currency(coin: str, currency: str, amount: str):
+
+        """
+            This static method calculates the amount of a specific cryptocurrency that can be bought with a given amount
+            of currency.
+
+            Parameters:
+            - coin (str): The name of the cryptocurrency.
+            - currency (str): The currency to be used for the purchase.
+            - amount (str): The amount of currency to be used for the purchase.
+
+            Returns:
+            buy (float): The amount of cryptocurrency that can be bought with the given amount of currency.
+
+            Note:
+            The method uses the `Cryptocurrency` class to fetch the current prices of the cryptocurrencies.
+
+            Example:
+            Suppose we want to buy Bitcoin (BTC) with 100 RUB. We can call the method as follows:
+
+            result = await Cryptocurrency.buy_to_currency("Bitcoin", "RUB", "100")
+            print(result)
+            0.00123456
+
+            The method will return the amount of Bitcoin that can be bought with 100 RUB, rounded to 8 decimal places.
+            """
+
+        if currency == "RUB":
+            if coin == "Bitcoin":
+                price_BTC: float = await Cryptocurrency.get_btc()
+                buy: float = round(float(amount) / price_BTC, 8)
+                return buy
+
+            elif coin == "Litecoin":
+                get_ltc = await Cryptocurrency.get_ltc_to_rub()
+                buy: float = round(float(amount) / get_ltc, 8)
+                return buy
+
+            elif coin == "USDT(trc20)":
+                get_trc: float = await Cryptocurrency.get_trx()
+                buy: float = round(float(amount) / get_trc, 8)
+                return buy
+
+            elif coin == "Monero(XMR)":
+                get_xmr: float = await Cryptocurrency.get_trx()
+                buy: float = round(float(amount) / get_xmr, 8)
+                return buy
+
+        elif currency == "BYN":
+            if coin == "Bitcoin":
+                price_BTC: float = await Cryptocurrency.get_btc()
+                buy: float = round(float(amount) / price_BTC, 8)
+                return buy
+
+            elif coin == "Litecoin":
+                get_ltc: float = await Cryptocurrency.get_ltc()
+                buy: float = round(float(amount) / get_ltc, 8)
+                return buy
+
+            elif coin == "USDT(trc20)":
+                get_trc: float = await Cryptocurrency.get_trx()
+                buy: float = round(float(amount) / get_trc, 8)
+                return buy
+
+            elif coin == "Monero(XMR)":
+                get_xmr: float = await Cryptocurrency.get_xmr()
+                buy: float = round(float(amount) / get_xmr, 8)
+                return buy
+
+    @staticmethod
     async def main_ikb() -> InlineKeyboardMarkup:
         return InlineKeyboardMarkup(
             inline_keyboard=[
@@ -292,15 +362,26 @@ class MainForms:
                     get_state_data = await state.get_data()
                     abbreviation = await MainForms.abbreviation(get_state_data['coin'])
 
-                    buy = await MainForms.buy(coin=get_state_data['coin'],
-                                              currency=get_state_data['currency'],
-                                              amount=get_state_data['amount'])
+                    if len(message.text) < 3:
+                        buy = await MainForms.buy(coin=get_state_data['coin'],
+                                                  currency=get_state_data['currency'],
+                                                  amount=get_state_data['amount'])
+
+                        text = f"Сумма к получению: {message.text} {get_state_data['coin']}\n" \
+                               f"Сумма к оплате: {buy} {get_state_data['currency_abbreviation']}\n\n" \
+                               f"📝Введите {get_state_data['coin']}-адрес кошелька, " \
+                               f"куда вы хотите отправить {message.text} {abbreviation}"
+                    else:
+                        buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
+                                                              currency=get_state_data['currency'],
+                                                              amount=get_state_data['amount'])
+
+                        text = f"Сумма к получению: {message.text} {get_state_data['currency_abbreviation']}\n" \
+                               f"Сумма к оплате: {buy} {get_state_data['coin']}\n\n" \
+                               f"📝Введите {get_state_data['coin']}-адрес кошелька, " \
+                               f"куда вы хотите отправить {message.text} {get_state_data['currency_abbreviation']}"
 
                     await state.update_data(buy=buy)
-                    text = f"Сумма к получению: {message.text} {get_state_data['coin']}\n" \
-                           f"Сумма к оплате: {buy} {get_state_data['currency_abbreviation']}\n\n" \
-                           f"📝Введите {get_state_data['coin']}-адрес кошелька, " \
-                           f"куда вы хотите отправить {message.text} {abbreviation}"
                     await message.answer(text=text,
                                          reply_markup=await MainForms.back_ikb(target="Main", action="0"))
                     await UserStates.Wallet.set()
