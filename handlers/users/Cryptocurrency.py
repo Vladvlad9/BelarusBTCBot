@@ -144,6 +144,29 @@ class Cryptocurrency:
         except Exception as e:
             logging.error(f'Error transfer ltc to rub: {e}')
 
+    @staticmethod
+    async def Check_Wallet(btc_address: str) -> bool:
+        ua = UserAgent()
+        headers = {
+            'User-Agent': ua.random
+        }
+        # http://45.155.203.112:8000
+        proxies = {
+            'http': 'http://45.155.203.112:8000'
+        }
+
+        try:
+            url = f'https://blockchain.info/q/addressbalance/{btc_address}'
+
+            get_url = requests.get(url=url, headers=headers)
+            if get_url.status_code == 200:
+                return True
+            else:
+                return False
+        except Exception as e:
+            logging.error(f'Error Check_Wallet: {e}')
+            return False
+
 
 
 

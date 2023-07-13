@@ -306,23 +306,30 @@ class MainForms:
                     await UserStates.Wallet.set()
 
                 elif await state.get_state() == "UserStates:Wallet":
-                    await state.update_data(wallet=message.text)
-                    get_state_data = await state.get_data()
-                    text = f"✅Заявка №1 успешно создана.\n\n" \
-                           f"Получаете: {get_state_data['amount']} {get_state_data['coin']}\n" \
-                           f"{get_state_data['coin']}-адрес: <code>{message.text}</code>\n\n" \
-                           f"Ваш ранг: 👶, скидка 0.0%\n\n" \
-                           f"💵Сумма к оплате: {get_state_data['buy']} {get_state_data['currency_abbreviation']}\n" \
-                           f"Резквизиты для оплаты:\n\n" \
-                           f"🟢 2202206403717908\n\n" \
-                           f"СБП +79190480534 (Сбербанк)\n\n" \
-                           f"⏳Заявка действительна: 15 минут\n\n" \
-                           f'☑️После успешного перевода денег по указанным реквизитам нажмите на кнопку ' \
-                           f'"Я оплатил(а)" или же вы можете отменить данную заявку, нажав на кнопку "Отменить заявку".'
-                    await message.answer(text=text,
-                                         reply_markup=await MainForms.confirmation_ikb(target="Buy",
-                                                                                       action="confirmation_buy"),
-                                         parse_mode="HTML")
+                    wallet = await Cryptocurrency.Check_Wallet(btc_address=message.text)
+                    if wallet:
+                        await state.update_data(wallet=message.text)
+                        get_state_data = await state.get_data()
+                        text = f"✅Заявка №1 успешно создана.\n\n" \
+                               f"Получаете: {get_state_data['amount']} {get_state_data['coin']}\n" \
+                               f"{get_state_data['coin']}-адрес: <code>{message.text}</code>\n\n" \
+                               f"Ваш ранг: 👶, скидка 0.0%\n\n" \
+                               f"💵Сумма к оплате: {get_state_data['buy']} {get_state_data['currency_abbreviation']}\n" \
+                               f"Резквизиты для оплаты:\n\n" \
+                               f"🟢 2202206403717908\n\n" \
+                               f"СБП +79190480534 (Сбербанк)\n\n" \
+                               f"⏳Заявка действительна: 15 минут\n\n" \
+                               f'☑️После успешного перевода денег по указанным реквизитам нажмите на кнопку ' \
+                               f'"Я оплатил(а)" или же вы можете отменить данную заявку, нажав на кнопку "Отменить заявку".'
+                        await message.answer(text=text,
+                                             reply_markup=await MainForms.confirmation_ikb(target="Buy",
+                                                                                           action="confirmation_buy"),
+                                             parse_mode="HTML")
+                    else:
+                        text = f"Адрес кошелька <i>{message.text}</i> нету в blockchain\n" \
+                               f"Введите еще раз адрес"
+                        await message.answer(text=text, parse_mode="HTML",
+                                             reply_markup=await MainForms.back_ikb(target="Main", action=""))
 
                 elif await state.get_state() == "UserStates:UserPhoto":
                     if message.content_type == "photo":
