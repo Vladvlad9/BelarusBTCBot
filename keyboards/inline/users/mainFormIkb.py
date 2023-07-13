@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from decimal import Decimal
 
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
@@ -45,44 +46,44 @@ class MainForms:
             rub = await Cryptocurrency.get_rub()
             if coin == "Bitcoin":
                 price_BTC: float = await Cryptocurrency.get_btc()
-                buy: float = round(float(amount) * price_BTC * rub, 8)
+                buy: float = round(float(amount) * price_BTC * rub, 3)
                 return buy
 
             elif coin == "Litecoin":
                 get_ltc = await Cryptocurrency.get_ltc_to_rub()
-                buy: float = round(float(amount) * get_ltc, 8)
+                buy: float = round(float(amount) * get_ltc, 3)
                 return buy
 
             elif coin == "USDT(trc20)":
                 get_trc: float = await Cryptocurrency.get_trx()
-                buy: float = round(float(amount) * get_trc * rub, 8)
+                buy: float = round(float(amount) * get_trc * rub, 3)
                 return buy
 
             elif coin == "Monero(XMR)":
                 get_xmr: float = await Cryptocurrency.get_trx()
-                buy: float = round(float(amount) * get_xmr * rub, 8)
+                buy: float = round(float(amount) * get_xmr * rub, 3)
                 return buy
 
         elif currency == "BYN":
             byn = await Cryptocurrency.get_byn()
             if coin == "Bitcoin":
                 price_BTC: float = await Cryptocurrency.get_btc()
-                buy: float = round(float(amount) * price_BTC * byn, 8)
+                buy: float = round(float(amount) * price_BTC * byn, 3)
                 return buy
 
             elif coin == "Litecoin":
                 get_ltc: float = await Cryptocurrency.get_ltc()
-                buy: float = round(float(amount) * get_ltc * byn, 8)
+                buy: float = round(float(amount) * get_ltc * byn, 3)
                 return buy
 
             elif coin == "USDT(trc20)":
                 get_trc: float = await Cryptocurrency.get_trx()
-                buy: float = round(float(amount) * get_trc * byn, 8)
+                buy: float = round(float(amount) * get_trc * byn, 3)
                 return buy
 
             elif coin == "Monero(XMR)":
                 get_xmr: float = await Cryptocurrency.get_xmr()
-                buy: float = round(float(amount) * get_xmr * byn, 8)
+                buy: float = round(float(amount) * get_xmr * byn, 3)
                 return buy
 
     @staticmethod
@@ -115,45 +116,37 @@ class MainForms:
 
         if currency == "RUB":
             if coin == "Bitcoin":
-                price_BTC: float = await Cryptocurrency.get_btc()
-                buy: float = round(float(amount) / price_BTC, 8)
-                return buy
+                price_BTC = await Cryptocurrency.get_btc()
+                return round(Decimal(amount) / Decimal(price_BTC), 3)
 
             elif coin == "Litecoin":
                 get_ltc = await Cryptocurrency.get_ltc_to_rub()
-                buy: float = round(float(amount) / get_ltc, 8)
-                return buy
+                return round(Decimal(amount) / Decimal(get_ltc), 3)
 
             elif coin == "USDT(trc20)":
-                get_trc: float = await Cryptocurrency.get_trx()
-                buy: float = round(float(amount) / get_trc, 8)
-                return buy
+                get_trc = await Cryptocurrency.get_trx()
+                return round(Decimal(amount) / Decimal(get_trc), 3)
 
             elif coin == "Monero(XMR)":
-                get_xmr: float = await Cryptocurrency.get_trx()
-                buy: float = round(float(amount) / get_xmr, 8)
-                return buy
+                get_xmr = await Cryptocurrency.get_trx()
+                return round(Decimal(amount) / Decimal(get_xmr), 3)
 
         elif currency == "BYN":
             if coin == "Bitcoin":
                 price_BTC: float = await Cryptocurrency.get_btc()
-                buy: float = round(float(amount) / price_BTC, 8)
-                return buy
+                return round(Decimal(amount) / Decimal(price_BTC), 8)
 
             elif coin == "Litecoin":
                 get_ltc: float = await Cryptocurrency.get_ltc()
-                buy: float = round(float(amount) / get_ltc, 8)
-                return buy
+                return round(Decimal(amount) / Decimal(get_ltc), 8)
 
             elif coin == "USDT(trc20)":
                 get_trc: float = await Cryptocurrency.get_trx()
-                buy: float = round(float(amount) / get_trc, 8)
-                return buy
+                return round(Decimal(amount) / Decimal(get_trc), 8)
 
             elif coin == "Monero(XMR)":
                 get_xmr: float = await Cryptocurrency.get_xmr()
-                buy: float = round(float(amount) / get_xmr, 8)
-                return buy
+                return round(Decimal(amount) / Decimal(get_xmr), 8)
 
     @staticmethod
     async def main_ikb() -> InlineKeyboardMarkup:
@@ -362,29 +355,110 @@ class MainForms:
                     get_state_data = await state.get_data()
                     abbreviation = await MainForms.abbreviation(get_state_data['coin'])
 
-                    if len(message.text) < 3:
-                        buy = await MainForms.buy(coin=get_state_data['coin'],
-                                                  currency=get_state_data['currency'],
-                                                  amount=get_state_data['amount'])
+                    if get_state_data['currency'] == "RUB":
+                        try:
+                            if len(message.text) < 3:
+                                buy = await MainForms.buy(coin=get_state_data['coin'],
+                                                          currency=get_state_data['currency'],
+                                                          amount=get_state_data['amount'])
 
-                        text = f"Сумма к получению: {message.text} {get_state_data['coin']}\n" \
-                               f"Сумма к оплате: {buy} {get_state_data['currency_abbreviation']}\n\n" \
-                               f"📝Введите {get_state_data['coin']}-адрес кошелька, " \
-                               f"куда вы хотите отправить {message.text} {abbreviation}"
-                    else:
-                        buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
-                                                              currency=get_state_data['currency'],
-                                                              amount=get_state_data['amount'])
+                                text = f"Сумма к получению: {message.text} {get_state_data['coin']}\n" \
+                                       f"Сумма к оплате: {buy} {get_state_data['currency_abbreviation']}\n\n" \
+                                       f"📝Введите {get_state_data['coin']}-адрес кошелька, " \
+                                       f"куда вы хотите отправить {message.text} {abbreviation}"
 
-                        text = f"Сумма к получению: {message.text} {get_state_data['currency_abbreviation']}\n" \
-                               f"Сумма к оплате: {buy} {get_state_data['coin']}\n\n" \
-                               f"📝Введите {get_state_data['coin']}-адрес кошелька, " \
-                               f"куда вы хотите отправить {message.text} {get_state_data['currency_abbreviation']}"
+                                await state.update_data(buy=buy)
+                                await message.answer(text=text,
+                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                                await UserStates.Wallet.set()
 
-                    await state.update_data(buy=buy)
-                    await message.answer(text=text,
-                                         reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                    await UserStates.Wallet.set()
+                            elif float(message.text):
+                                buy = await MainForms.buy(coin=get_state_data['coin'],
+                                                          currency=get_state_data['currency'],
+                                                          amount=get_state_data['amount'])
+
+                                text = f"Сумма к получению: {message.text} {get_state_data['coin']}\n" \
+                                       f"Сумма к оплате: {buy} {get_state_data['currency_abbreviation']}\n\n" \
+                                       f"📝Введите {get_state_data['coin']}-адрес кошелька, " \
+                                       f"куда вы хотите отправить {message.text} {get_state_data['coin']}"
+
+                                await state.update_data(buy=buy)
+                                await message.answer(text=text,
+                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                                await UserStates.Wallet.set()
+
+                            else:
+                                buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
+                                                                      currency=get_state_data['currency'],
+                                                                      amount=get_state_data['amount'])
+
+                                text = f"Сумма к получению: {message.text} {get_state_data['coin']}\n" \
+                                       f"Сумма к оплате: {buy} {get_state_data['currency_abbreviation']}\n\n" \
+                                       f"📝Введите {get_state_data['coin']}-адрес кошелька, " \
+                                       f"куда вы хотите отправить {message.text} {get_state_data['coin']}"
+
+                                await state.update_data(buy=buy)
+                                await message.answer(text=text,
+                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                                await UserStates.Wallet.set()
+                        except Exception as e:
+                            await message.answer(text="Не вверно введены данные",
+                                                 reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                            await UserStates.Buy.set()
+                            logging.error(f"Error {e}")
+
+                    elif get_state_data['currency'] == 'BYN':
+                        try:
+                            if len(message.text) < 3:
+                                buy = await MainForms.buy(coin=get_state_data['coin'],
+                                                          currency=get_state_data['currency'],
+                                                          amount=get_state_data['amount'])
+
+                                text = f"Сумма к получению: {message.text} {get_state_data['currency_abbreviation']}\n" \
+                                       f"Сумма к оплате: {buy} {get_state_data['coin']}\n\n" \
+                                       f"📝Введите {get_state_data['coin']}-адрес кошелька, " \
+                                       f"куда вы хотите отправить {message.text} {get_state_data['currency_abbreviation']}"
+
+                                await state.update_data(buy=buy)
+                                await message.answer(text=text,
+                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                                await UserStates.Wallet.set()
+
+                            elif float(message.text):
+                                buy = await MainForms.buy(coin=get_state_data['coin'],
+                                                          currency=get_state_data['currency'],
+                                                          amount=get_state_data['amount'])
+
+                                text = f"Сумма к получению: {message.text} {get_state_data['coin']}\n" \
+                                       f"Сумма к оплате: {buy} {get_state_data['currency_abbreviation']}\n\n" \
+                                       f"📝Введите {get_state_data['coin']}-адрес кошелька, " \
+                                       f"куда вы хотите отправить {message.text} {get_state_data['coin']}"
+
+                                await state.update_data(buy=buy)
+                                await message.answer(text=text,
+                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                                await UserStates.Wallet.set()
+
+                            else:
+                                buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
+                                                                      currency=get_state_data['currency'],
+                                                                      amount=get_state_data['amount'])
+
+                                text = f"Сумма к получению: {message.text} {get_state_data['coin']}\n" \
+                                       f"Сумма к оплате: {buy} {get_state_data['currency_abbreviation']}\n\n" \
+                                       f"📝Введите {get_state_data['coin']}-адрес кошелька, " \
+                                       f"куда вы хотите отправить {message.text} {get_state_data['coin']}"
+
+                                await state.update_data(buy=buy)
+                                await message.answer(text=text,
+                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                                await UserStates.Wallet.set()
+                        except Exception as e:
+                            await message.answer(text="Не вверно введена сумма\n"
+                                                      "Повторите попытку",
+                                                 reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                            await UserStates.Buy.set()
+                            logging.error(f"Error {e}")
 
                 elif await state.get_state() == "UserStates:Wallet":
                     wallet = await Cryptocurrency.Check_Wallet(btc_address=message.text)
