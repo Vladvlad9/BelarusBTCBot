@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 from decimal import Decimal
 
 from aiogram.dispatcher import FSMContext
@@ -461,19 +462,25 @@ class MainForms:
                             logging.error(f"Error {e}")
 
                 elif await state.get_state() == "UserStates:ERIP":
-                    get_state_data = await state.get_data()
-                    abbreviation = await MainForms.abbreviation(get_state_data['coin'])
+                    if re.match(r"^[0-9]{11}$", message.text):
+                        get_state_data = await state.get_data()
+                        abbreviation = await MainForms.abbreviation(get_state_data['coin'])
 
-                    text = f"Введите {get_state_data['coin']}-адрес кошелька, " \
-                           f"куда вы хотите отправить \n" \
-                           f"{get_state_data['amount']} {abbreviation}"
+                        text = f"Введите {get_state_data['coin']}-адрес кошелька, " \
+                               f"куда вы хотите отправить \n" \
+                               f"{get_state_data['amount']} {abbreviation}"
 
-                    await message.answer(text=text,
-                                         reply_markup=await MainForms.back_ikb(target="Main",
-                                                                               action="0"))
-                    await state.update_data(erip=message.text)
+                        await message.answer(text=text,
+                                             reply_markup=await MainForms.back_ikb(target="Main",
+                                                                                   action="0"))
+                        await state.update_data(erip=message.text)
 
-                    await UserStates.Wallet.set()
+                        await UserStates.Wallet.set()
+                    else:
+                        text = "ЕРИП введен не верно\n" \
+                               "Попробуйте ввести еще раз"
+                        await message.answer(text=text,
+                                             reply_markup=await MainForms.back_ikb(target="Main", action="0"))
 
                 elif await state.get_state() == "UserStates:Wallet":
                     wallet = await Cryptocurrency.Check_Wallet(btc_address=message.text)
