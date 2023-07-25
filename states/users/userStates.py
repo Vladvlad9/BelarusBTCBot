@@ -5,3 +5,4 @@ class UserStates(StatesGroup):
     Buy = State()
     Wallet = State()
     UserPhoto = State()
+    ERIP = State()
