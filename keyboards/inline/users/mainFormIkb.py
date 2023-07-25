@@ -289,6 +289,14 @@ class MainForms:
         )
 
     @staticmethod
+    async def isfloat(value: str):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
     async def process(callback: CallbackQuery = None, message: Message = None, state: FSMContext = None) -> None:
         if callback:
             if callback.data.startswith("main"):
@@ -321,7 +329,7 @@ class MainForms:
                     elif data.get('action') == "coin_buy":
                         coin_id = data.get('id')
                         await state.update_data(coin=coin_id)
-                        text = f'✅ Введите нужную сумму в {coin_id}\n' \
+                        text = f'✅ Введите нужную сумму в {coin_id} или в рублях\n' \
                                '🤖Оплата будет проверена автоматически.'
 
                         await UserStates.Buy.set()
@@ -362,104 +370,144 @@ class MainForms:
                 pass
 
             if state:
+                # if await state.get_state() == "UserStates:Buy":
+                #     await state.update_data(amount=message.text)
+                #     get_state_data = await state.get_data()
+                #     abbreviation = await MainForms.abbreviation(get_state_data['coin'])
+                #
+                #     if get_state_data['currency'] == "RUB":
+                #
+                #         try:
+                #             if len(message.text) < 3:
+                #                 buy = await MainForms.buy(coin=get_state_data['coin'],
+                #                                           currency=get_state_data['currency'],
+                #                                           amount=get_state_data['amount'])
+                #
+                #                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                #                        f"{message.text} {abbreviation}"
+                #
+                #                 await state.update_data(buy=buy)
+                #                 await message.answer(text=text,
+                #                                      reply_markup=await MainForms.back_ikb(target="Main", action="0"),
+                #                                      parse_mode="HTML")
+                #                 await UserStates.ERIP.set()
+                #
+                #             elif message.text.find("0") != -1:
+                #                 buy = await MainForms.buy(coin=get_state_data['coin'],
+                #                                           currency=get_state_data['currency'],
+                #                                           amount=get_state_data['amount'])
+                #
+                #                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                #                        f"{buy} {get_state_data['currency']}"
+                #
+                #                 await state.update_data(buy=buy)
+                #                 await message.answer(text=text,
+                #                                      reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                #                 await UserStates.ERIP.set()
+                #
+                #             else:
+                #                 buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
+                #                                                       currency=get_state_data['currency'],
+                #                                                       amount=get_state_data['amount'])
+                #
+                #                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                #                        f"{buy} {abbreviation}"
+                #
+                #                 await state.update_data(buy=buy)
+                #                 await message.answer(text=text,
+                #                                      reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                #                 await UserStates.ERIP.set()
+                #         except Exception as e:
+                #             await message.answer(text="Не вверно введены данные",
+                #                                  reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                #             await UserStates.Buy.set()
+                #             logging.error(f"Error {e}")
+                #
+                #     elif get_state_data['currency'] == 'BYN':
+                #         try:
+                #             if len(message.text) < 3:
+                #                 buy = await MainForms.buy(coin=get_state_data['coin'],
+                #                                           currency=get_state_data['currency'],
+                #                                           amount=get_state_data['amount'])
+                #
+                #                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                #                        f"{message.text} {abbreviation}"
+                #
+                #                 await state.update_data(buy=buy)
+                #                 await message.answer(text=text,
+                #                                      reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                #                 await UserStates.ERIP.set()
+                #
+                #             elif message.text.find("0") != -1:
+                #                 buy = await MainForms.buy(coin=get_state_data['coin'],
+                #                                           currency=get_state_data['currency'],
+                #                                           amount=get_state_data['amount'])
+                #
+                #                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                #                        f"{buy} {get_state_data['currency']}"
+                #
+                #                 await state.update_data(buy=buy)
+                #                 await message.answer(text=text,
+                #                                      reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                #                 await UserStates.ERIP.set()
+                #
+                #             else:
+                #                 buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
+                #                                                       currency=get_state_data['currency'],
+                #                                                       amount=get_state_data['amount'])
+                #
+                #                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                #                        f"{buy} {abbreviation}"
+                #
+                #                 await state.update_data(buy=buy)
+                #                 await message.answer(text=text,
+                #                                      reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                #                 await UserStates.ERIP.set()
+                #         except Exception as e:
+                #             await message.answer(text="Не вверно введена сумма\n"
+                #                                       "Повторите попытку",
+                #                                  reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                #             await UserStates.Buy.set()
+                #             logging.error(f"Error {e}")
+
                 if await state.get_state() == "UserStates:Buy":
                     await state.update_data(amount=message.text)
                     get_state_data = await state.get_data()
                     abbreviation = await MainForms.abbreviation(get_state_data['coin'])
 
-                    if get_state_data['currency'] == "RUB":
-                        try:
-                            if len(message.text) < 3:
-                                buy = await MainForms.buy(coin=get_state_data['coin'],
-                                                          currency=get_state_data['currency'],
-                                                          amount=get_state_data['amount'])
+                    try:
+                        if len(message.text) < 3:
+                            buy = await MainForms.buy(coin=get_state_data['coin'],
+                                                      currency=get_state_data['currency'],
+                                                      amount=get_state_data['amount'])
 
-                                text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                       f"{message.text} {abbreviation}"
+                            text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                                   f"{message.text} {abbreviation}"
 
-                                await state.update_data(buy=buy)
-                                await message.answer(text=text,
-                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"),
-                                                     parse_mode="HTML")
-                                await UserStates.ERIP.set()
+                        elif message.text.find("0") != -1:
+                            buy = await MainForms.buy(coin=get_state_data['coin'],
+                                                      currency=get_state_data['currency'],
+                                                      amount=get_state_data['amount'])
 
-                            elif float(message.text):
-                                buy = await MainForms.buy(coin=get_state_data['coin'],
-                                                          currency=get_state_data['currency'],
-                                                          amount=get_state_data['amount'])
+                            text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                                   f"{buy} {get_state_data['currency']}"
 
-                                text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                       f"{message.text} {abbreviation}"
+                        else:
+                            buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
+                                                                  currency=get_state_data['currency'],
+                                                                  amount=get_state_data['amount'])
+                            text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить {buy} {abbreviation}"
 
-                                await state.update_data(buy=buy)
-                                await message.answer(text=text,
-                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                                await UserStates.ERIP.set()
-
-                            else:
-                                buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
-                                                                      currency=get_state_data['currency'],
-                                                                      amount=get_state_data['amount'])
-
-                                text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                       f"{message.text} {abbreviation}"
-
-                                await state.update_data(buy=buy)
-                                await message.answer(text=text,
-                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                                await UserStates.ERIP.set()
-                        except Exception as e:
-                            await message.answer(text="Не вверно введены данные",
-                                                 reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                            await UserStates.Buy.set()
-                            logging.error(f"Error {e}")
-
-                    elif get_state_data['currency'] == 'BYN':
-                        try:
-                            if len(message.text) < 3:
-                                buy = await MainForms.buy(coin=get_state_data['coin'],
-                                                          currency=get_state_data['currency'],
-                                                          amount=get_state_data['amount'])
-
-                                text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                       f"{message.text} {abbreviation}"
-
-                                await state.update_data(buy=buy)
-                                await message.answer(text=text,
-                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                                await UserStates.ERIP.set()
-
-                            elif float(message.text):
-                                buy = await MainForms.buy(coin=get_state_data['coin'],
-                                                          currency=get_state_data['currency'],
-                                                          amount=get_state_data['amount'])
-
-                                text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                       f"{message.text} {abbreviation}"
-
-                                await state.update_data(buy=buy)
-                                await message.answer(text=text,
-                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                                await UserStates.ERIP.set()
-
-                            else:
-                                buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
-                                                                      currency=get_state_data['currency'],
-                                                                      amount=get_state_data['amount'])
-
-                                text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                       f"{message.text} {abbreviation}"
-
-                                await state.update_data(buy=buy)
-                                await message.answer(text=text,
-                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                                await UserStates.ERIP.set()
-                        except Exception as e:
-                            await message.answer(text="Не вверно введена сумма\n"
-                                                      "Повторите попытку",
-                                                 reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                            await UserStates.Buy.set()
-                            logging.error(f"Error {e}")
+                        await state.update_data(buy=buy)
+                        await message.answer(text=text,
+                                             reply_markup=await MainForms.back_ikb(target="Main", action="0"),
+                                             parse_mode="HTML")
+                        await UserStates.ERIP.set()
+                    except Exception as e:
+                        await message.answer(text="Не вверно введены данные",
+                                             reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                        await UserStates.Buy.set()
+                        logging.error(f"Error {e}")
 
                 elif await state.get_state() == "UserStates:ERIP":
                     if re.match(r"^[0-9]{11}$", message.text):
