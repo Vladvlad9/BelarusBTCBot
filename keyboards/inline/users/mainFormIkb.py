@@ -232,19 +232,20 @@ class MainForms:
 
         return InlineKeyboardMarkup(
             inline_keyboard=[
-                [
-                    InlineKeyboardButton(text=name,
-                                         callback_data=main_cb.new(name_items["target"],
-                                                                   name_items["action"],
-                                                                   name_items["id"],
-                                                                   name_items["editId"])
-                                         )
-                ]for name, name_items in data.items()
-            ] + [
-                [
-                    InlineKeyboardButton(text="◀️ Назад", callback_data=main_cb.new("Buy", "getBuy", 0, 0))
-                ]
-            ]
+                                [
+                                    InlineKeyboardButton(text=name,
+                                                         callback_data=main_cb.new(name_items["target"],
+                                                                                   name_items["action"],
+                                                                                   name_items["id"],
+                                                                                   name_items["editId"])
+                                                         )
+                                ] for name, name_items in data.items()
+                            ] + [
+                                [
+                                    InlineKeyboardButton(text="◀️ Назад",
+                                                         callback_data=main_cb.new("Buy", "getBuy", 0, 0))
+                                ]
+                            ]
         )
 
     @staticmethod
@@ -536,7 +537,10 @@ class MainForms:
                                                       amount=get_state_data['amount'])
 
                             text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                   f"{message.text} {abbreviation}"
+                                   f"{buy} {get_state_data['currency']}" \
+                                if get_state_data['exchangeType'] == "sell" \
+                                else f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                                     f"{message.text} {abbreviation}"
 
                         elif message.text.find("0") != -1:
                             buy = await MainForms.buy(coin=get_state_data['coin'],
@@ -544,13 +548,26 @@ class MainForms:
                                                       amount=get_state_data['amount'])
 
                             text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                   f"{buy} {get_state_data['currency']}"
+                                   f"{buy} {get_state_data['currency']}" \
+                                if get_state_data['exchangeType'] == "sell" \
+                                else f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                                     f"{buy} {get_state_data['currency']}"
+
+                            # text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                            #        f"{buy} {get_state_data['currency']}"
 
                         else:
                             buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
                                                                   currency=get_state_data['currency'],
                                                                   amount=get_state_data['amount'])
-                            text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить {buy} {abbreviation}"
+
+                            text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                                   f"{buy} {get_state_data['currency']}" \
+                                if get_state_data['exchangeType'] == "sell" \
+                                else f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                                     f"{buy} {abbreviation}"
+
+                            # text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить {buy} {abbreviation}"
 
                         await state.update_data(buy=buy)
                         await message.answer(text=text,
