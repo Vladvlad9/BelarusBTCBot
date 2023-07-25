@@ -16,9 +16,25 @@ main_cb = CallbackData("main", "target", "action", "id", "editId")
 
 
 class MainForms:
+    @staticmethod
+    async def messageAdministrators(message, state, photo):
+        state_data = await state.get_data()
+        text = f"Заявка № {1}\n\n" \
+               f"Имя {message.from_user.first_name}\n" \
+               f"Получено {state_data['currency_abbreviation']}: {state_data['buy']}\n" \
+               f"Нужно отправить  {state_data['coin']}: {state_data['amount']}\n" \
+               f"Кошелёк: {state_data['wallet']}"
+
+        tasks = []
+        for admin in CONFIG.BOT.ADMINS:
+            tasks.append(bot.send_photo(chat_id=admin, photo=photo,
+                                        caption=f"Пользователь оплатил!\n\n"
+                                                f"{text}"))
+        await asyncio.gather(*tasks, return_exceptions=True)  # Отправка всем админам сразу
+        await MainForms.confirmation_timer(message=message)
 
     @staticmethod
-    async def confirmation_timer(message=None):
+    async def confirmation_timer(message):
         await asyncio.sleep(3)
         await message.answer(text="Заявка успешно создана",
                              reply_markup=await MainForms.main_ikb())
@@ -312,7 +328,7 @@ class MainForms:
                                                          reply_markup=await MainForms.back_ikb("Buy", "currency_buy"))
 
                     elif data.get('action') == "confirmation_buy":
-                        await callback.message.edit_text(text="📸 Отправьте скрин перевода, либо чек оплаты!")
+                        await callback.message.edit_text(text="📎 Отправьте скрин перевода, либо чек оплаты!")
                         await UserStates.UserPhoto.set()
 
                 elif data.get("target") == "Sell":
@@ -515,20 +531,7 @@ class MainForms:
                                                         timeout=12,
                                                         chunk_size=1215000)
 
-                                state_data = await state.get_data()
-                                text = f"Заявка № {1}\n\n" \
-                                       f"Имя {message.from_user.first_name}\n" \
-                                       f"Получено {state_data['currency_abbreviation']}: {state_data['buy']}\n" \
-                                       f"Нужно отправить  {state_data['coin']}: {state_data['amount']}\n" \
-                                       f"Кошелёк: {state_data['wallet']}"
-
-                                tasks = []
-                                for admin in CONFIG.BOT.ADMINS:
-                                    tasks.append(bot.send_photo(chat_id=admin, photo=photo,
-                                                                caption=f"Пользователь оплатил!\n\n"
-                                                                        f"{text}"))
-                                await asyncio.gather(*tasks, return_exceptions=True)  # Отправка всем админам сразу
-                                await MainForms.confirmation_timer(message=message)
+                                await MainForms.messageAdministrators(message=message, state=state, photo=photo)
 
                                 await state.finish()
                             except Exception as e:
