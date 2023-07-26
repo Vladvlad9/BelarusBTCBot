@@ -8,7 +8,6 @@ class SalesSchema(BaseModel):
     quantity: int
     coin: str
     price_per_unit: float
-    wallet: str
     erip: str
     date = Field(default=datetime.now())
     status: bool = Field(default=False)

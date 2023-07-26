@@ -28,7 +28,6 @@ class Purchases(Base):
     price_per_unit = Column(Float)  # Цена за единицу
     date = Column(TIMESTAMP, default=datetime.now())  # Дата транзакции
     wallet = Column(Text, default=None)
-    erip = Column(String(11), default=None)
     status = Column(Boolean, default=False)  # Статус
 
     user = relationship('Users', backref='purchases')
@@ -44,7 +43,6 @@ class Sales(Base):
     coin = Column(String(10))
     price_per_unit = Column(Float)
     date = Column(TIMESTAMP, default=datetime.now())
-    wallet = Column(Text, default=None)
     erip = Column(String(11), default=None)
     status = Column(Boolean, default=False)
 
