@@ -9,8 +9,13 @@ from aiogram.utils.callback_data import CallbackData
 from aiogram.utils.exceptions import BadRequest
 
 from config import CONFIG
+from crud import CRUDUsers
+from crud.purchaseCRUD import CRUDPurchases
+from crud.saleCRUD import CRUDSales
+from crud.transactionCRUD import CRUDTransactions
 from handlers.users.Cryptocurrency import Cryptocurrency
 from loader import bot
+from schemas import TransactionsSchema, PurchasesSchema, SalesSchema
 from states.users.userStates import UserStates
 
 main_cb = CallbackData("main", "target", "action", "id", "editId")
@@ -628,13 +633,53 @@ class MainForms:
                             photo = message.photo[0].file_id
 
                             try:
-                                await bot.download_file(file_path=get_photo.file_path,
-                                                        destination=f'user_check/{1}_{message.from_user.id}.jpg',
-                                                        timeout=12,
-                                                        chunk_size=1215000)
+                                user = await CRUDUsers.get(user_id=message.from_user.id)
+                                get_state_data = await state.get_data()
 
-                                await MainForms.messageAdministrators(message=message, state=state, photo=photo)
+                                if get_state_data['exchangeType'] == "buy":
+                                    purchase = await CRUDPurchases.add(purchase=PurchasesSchema(
+                                        user_id=user.id,
+                                        currency=get_state_data['currency'],
+                                        quantity=get_state_data['amount'],
+                                        coin=get_state_data['coin'],
+                                        price_per_unit=get_state_data['buy'],
+                                        wallet=get_state_data['wallet'],
+                                        erip=get_state_data['erip']
+                                    ))
+                                    transaction = await CRUDTransactions.add(transaction=TransactionsSchema(
+                                        purchase_id=purchase.id
+                                    ))
 
-                                await state.finish()
+                                if get_state_data['exchangeType'] == "sell":
+                                    sale = await CRUDSales.add(sale=SalesSchema(
+                                        user_id=user.id,
+                                        currency=get_state_data['currency'],
+                                        quantity=get_state_data['amount'],
+                                        coin=get_state_data['coin'],
+                                        price_per_unit=get_state_data['buy'],
+                                        wallet=get_state_data['wallet'],
+                                        erip=get_state_data['erip']
+                                    ))
+                                    transaction = await CRUDTransactions.add(transaction=TransactionsSchema(
+                                        sale_id=sale.id
+                                    ))
+                            except Exception as e:
+                                logging.error(f'Error add что происодит я хз in db: {e}')
+
+                            try:
+                                if transaction:
+                                    await bot.download_file(file_path=get_photo.file_path,
+                                                            destination=f'user_check/{1}_{message.from_user.id}.jpg',
+                                                            timeout=12,
+                                                            chunk_size=1215000)
+
+                                    await MainForms.messageAdministrators(message=message, state=state, photo=photo)
+
+                                    await state.finish()
+                                else:
+                                    await message.answer(text="Ошибка, попробуйте снова или "
+                                                              "обратитесь к администраторам",
+                                                         reply_markup=await MainForms.back_ikb(target="Main",
+                                                                                               action=""))
                             except Exception as e:
                                 logging.error(f'Error UserStates:UserPhoto: {e}')

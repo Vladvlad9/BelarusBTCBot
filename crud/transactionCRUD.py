@@ -1,3 +1,5 @@
+import logging
+
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
@@ -18,8 +20,8 @@ class CRUDTransactions(object):
         session.add(transactions)
         try:
             await session.commit()
-        except IntegrityError:
-            pass
+        except IntegrityError as e:
+            logging.error(f'Error add transaction in db: {e}')
         else:
             await session.refresh(transactions)
             return TransactionsInDBSchema(**transactions.__dict__)

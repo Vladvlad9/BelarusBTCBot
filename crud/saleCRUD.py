@@ -1,3 +1,5 @@
+import logging
+
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
@@ -18,8 +20,8 @@ class CRUDSales(object):
         session.add(sales)
         try:
             await session.commit()
-        except IntegrityError:
-            pass
+        except IntegrityError as e:
+            logging.error(f'Error add sale in db: {e}')
         else:
             await session.refresh(sales)
             return SalesInDBSchema(**sales.__dict__)

@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, validator
 class TransactionsSchema(BaseModel):
     purchase_id: int = Field(default=None)
     sale_id: int = Field(default=None)
-    date_created:  datetime = Field(default=datetime.now())
+    date = Field(default=datetime.now())
     status: bool = Field(default=False)
 
 

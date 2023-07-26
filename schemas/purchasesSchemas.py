@@ -7,9 +7,9 @@ class PurchasesSchema(BaseModel):
     currency: str
     quantity: int
     coin: str
+    price_per_unit: float
     wallet: str
     erip: str
-    price_per_unit: float
     date = Field(default=datetime.now())
     status: bool = Field(default=False)
 

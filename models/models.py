@@ -48,15 +48,6 @@ class Sales(Base):
     erip = Column(String(11), default=None)
     status = Column(Boolean, default=False)
 
-    def __init__(self, user_id, currency, quantity, coin, price_per_unit, date, status, wallet, erip):
-        super().__init__(user_id, currency, quantity, coin, price_per_unit, date, status, wallet, erip)
-
-    @validates('erip')
-    def validate_quantity(self, key, value):
-        if value < 11:
-            raise ValueError('erip field must not be < 11')
-        return value
-
     user = relationship('Users', backref='sales')
 
 
