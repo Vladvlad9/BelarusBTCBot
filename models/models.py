@@ -14,23 +14,7 @@ class Users(Base):
     user_id = Column(BigInteger, nullable=False)
     date_created = Column(TIMESTAMP, default=datetime.now())  # Дата создания акк.
     transaction_timer = Column(Boolean, default=False)
-    captcha = Column(Boolean, default=False)
-
-
-# class Transaction(Base):
-#     __tablename__ = 'transactions'
-#
-#     id = Column(Integer, primary_key=True)
-#     user_id = Column(BigInteger, ForeignKey("users.id", ondelete="NO ACTION"), nullable=False)
-#     exchange_rate = Column(Float, default=0)  # курс обмена
-#     buy_BTC = Column(Float, default=0)
-#     sale = Column(Float, default=0)
-#     currency_id = Column(Integer, ForeignKey("currency.id", ondelete="NO ACTION"), nullable=False)
-#     wallet = Column(Text, default=None)
-#     date_created = Column(TIMESTAMP, default=datetime.now())
-#     approved = Column(Boolean, default=False)
-#     check = Column(Text, default="None")
-#     operation_id = Column(Integer, default=0)
+    captcha = Column(Text, default=False)
 
 
 class Purchases(Base):
