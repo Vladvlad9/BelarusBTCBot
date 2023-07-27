@@ -25,6 +25,24 @@ main_cb = CallbackData("main", "target", "action", "id", "editId")
 
 
 class MainForms:
+    @staticmethod
+    async def send_timer_message(chat_id: int, state):
+        await state.finish()
+        user = await CRUDUsers.get(user_id=chat_id)
+        if user.transaction_timer:
+            await asyncio.sleep(0)
+            user.transaction_timer = False
+            await CRUDUsers.update(user=user)
+            await bot.send_message(chat_id=chat_id,
+                                   text='Время вышло!\n'
+                                        f'{CONFIGTEXT.MAIN_FORM.TEXT}',
+                                   reply_markup=await MainForms.main_kb())
+        else:
+            await asyncio.sleep(0)
+            user.transaction_timer = False
+            await CRUDUsers.update(user=user)
+            return
+
 
     @staticmethod
     async def main_kb() -> ReplyKeyboardMarkup:
@@ -770,6 +788,11 @@ class MainForms:
                                              reply_markup=await MainForms.back_ikb(target="Main", action="0"))
 
                 elif await state.get_state() == "UserStates:Wallet":
+                    user = await CRUDUsers.get(user_id=message.from_user.id)
+                    user.transaction_timer = True
+                    await CRUDUsers.update(user=user)
+                    #await MainForms.send_timer_message(chat_id=message.from_user.id, state=state)
+
                     wallet = await Cryptocurrency.Check_Wallet(btc_address=message.text)
                     get_state_data = await state.get_data()
                     if wallet:
@@ -781,6 +804,9 @@ class MainForms:
                                              reply_markup=await MainForms.confirmation_ikb(target="Buy",
                                                                                            action="confirmation_buy"),
                                              parse_mode="HTML")
+
+                        await asyncio.sleep(int(60))
+                        await MainForms.send_timer_message(chat_id=message.from_user.id, state=state)
 
                     else:
                         text = f"Адрес кошелька <i>{message.text}</i> нету в blockchain\n" \
@@ -840,7 +866,7 @@ class MainForms:
                                                             chunk_size=1215000)
 
                                     await MainForms.messageAdministrators(message=message, state=state, photo=photo)
-
+                                    await MainForms.send_timer_message(chat_id=message.from_user.id, state=state)
                                     await state.finish()
                                 else:
                                     await message.answer(text="Ошибка, попробуйте снова или "
