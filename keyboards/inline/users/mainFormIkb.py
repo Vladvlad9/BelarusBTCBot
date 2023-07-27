@@ -13,6 +13,7 @@ from crud import CRUDUsers
 from crud.purchaseCRUD import CRUDPurchases
 from crud.saleCRUD import CRUDSales
 from crud.transactionCRUD import CRUDTransactions
+from handlers.users.Check_сurrency import Check_currency
 from handlers.users.Cryptocurrency import Cryptocurrency
 from loader import bot
 from schemas import TransactionsSchema, PurchasesSchema, SalesSchema
@@ -52,11 +53,11 @@ class MainForms:
         get_state_data = await state.get_data()
 
         text = f"<b>✅Заявка №449112 успешно создана.</b>\n\n" \
-               f"💵<b>Получаете</b>: {get_state_data['amount']} {get_state_data['coin']}\n" \
-               f"<b>{get_state_data['coin']}-адрес</b>:\n\n" \
+               f"💵<b>Получаете</b>: {get_state_data['amount']} {get_state_data['coin']}\n\n" \
+               f"<b>{get_state_data['coin']}-адрес</b>:\n" \
                f"<code>{message.text}</code>\n\n" \
                f"Ваш ранг: 👶, скидка 0.0%\n\n" \
-               f"💵Сумма к оплате: {get_state_data['buy']} {get_state_data['currency_abbreviation']}\n" \
+               f"💵Сумма к оплате: {get_state_data['buy']} {get_state_data['currency_abbreviation']}\n\n" \
                f"Резквизиты для оплаты:\n\n" \
                f"- ЕРИП ПЛАТЕЖИ\n" \
                f"- БАНКОВСКИЕ ФИНАНСОВЫЕ УСЛУГИ\n" \
@@ -93,15 +94,29 @@ class MainForms:
     @staticmethod
     async def messageAdministrators(message, state, photo):
         state_data = await state.get_data()
-        text = f"Заявка № {1}\n\n" \
-               f"Имя {message.from_user.first_name}\n" \
-               f"Получено {state_data['currency_abbreviation']}: {state_data['buy']}\n" \
-               f"Нужно отправить  {state_data['coin']}: {state_data['amount']}\n"
+
+        if state_data['exchangeType'] == "sell":
+            text = f"Заявка № {1}\n\n" \
+                   f"Пользователь <code>{message.from_user.first_name}</code> хочет " \
+                   f"<code>продать {state_data['amount']} {state_data['coin']}</code>\n\n" \
+                   f"ЕРИП: <code>{state_data['erip']}</code>\n\n" \
+                   f"Получите: {state_data['buy']} {state_data['currency_abbreviation']}\n\n"
+        else:
+            text = f"Заявка № {1}\n\n" \
+                   f"Пользователь <code>{message.from_user.first_name}</code> хочет " \
+                   f"<code>купить {state_data['amount']} {state_data['coin']}</code>\n\n" \
+                   f"Кошелек: <code>{state_data['wallet']}</code>\n\n" \
+                   f"Нужно отправить: {state_data['buy']} {state_data['currency_abbreviation']}"
+
+        # text = f"Заявка № {1}\n\n" \
+        #        f"Имя {message.from_user.first_name}\n" \
+        #        f"Получено {state_data['currency_abbreviation']}: {state_data['buy']}\n" \
+        #        f"Нужно отправить  {state_data['coin']}: {state_data['amount']}\n"
 
         tasks = []
         for admin in CONFIG.BOT.ADMINS:
             tasks.append(bot.send_photo(chat_id=admin, photo=photo,
-                                        caption=f"Пользователь оплатил!\n\n"
+                                        caption=f"Пользователь оплатил!⤴️\n\n"
                                                 f"{text}"))
         await asyncio.gather(*tasks, return_exceptions=True)  # Отправка всем админам сразу
         await MainForms.confirmation_timer(message=message)
@@ -117,7 +132,7 @@ class MainForms:
         data = {
             "Bitcoin": "btc",
             "Litecoin": "ltc",
-            "USDT(trc20)": "usdt",
+            "USDT": "usdt",
             "Monero(XMR)": "xmr",
             "RUB": "₽",
             "BYN": "Br",
@@ -139,7 +154,7 @@ class MainForms:
                 buy: float = round(float(amount) * get_ltc, 3)
                 return buy
 
-            elif coin == "USDT(trc20)":
+            elif coin == "USDT":
                 get_trc: float = await Cryptocurrency.get_trx()
                 buy: float = round(float(amount) * get_trc * rub, 3)
                 return buy
@@ -161,7 +176,7 @@ class MainForms:
                 buy: float = round(float(amount) * get_ltc * byn, 3)
                 return buy
 
-            elif coin == "USDT(trc20)":
+            elif coin == "USDT":
                 get_trc: float = await Cryptocurrency.get_trx()
                 buy: float = round(float(amount) * get_trc * byn, 3)
                 return buy
@@ -208,7 +223,7 @@ class MainForms:
                 get_ltc = await Cryptocurrency.get_ltc_to_rub()
                 return round(Decimal(amount) / Decimal(get_ltc), 3)
 
-            elif coin == "USDT(trc20)":
+            elif coin == "USDT":
                 get_trc = await Cryptocurrency.get_trx()
                 return round(Decimal(amount) / Decimal(get_trc), 3)
 
@@ -225,7 +240,7 @@ class MainForms:
                 get_ltc: float = await Cryptocurrency.get_ltc()
                 return round(Decimal(amount) / Decimal(get_ltc), 8)
 
-            elif coin == "USDT(trc20)":
+            elif coin == "USDT":
                 get_trc: float = await Cryptocurrency.get_trx()
                 return round(Decimal(amount) / Decimal(get_trc), 8)
 
@@ -239,14 +254,14 @@ class MainForms:
             inline_keyboard=[
                 [
                     InlineKeyboardButton(text="Купить",
-                                         callback_data=main_cb.new("Buy", "getBuy", 0, 0)),
+                                         callback_data=main_cb.new("Buy", "currency_buy", 0, 0)),
                     InlineKeyboardButton(text="Продать",
-                                         callback_data=main_cb.new("Sell", "getSell", 0, 0))
+                                         callback_data=main_cb.new("Sell", "currency_buy", 0, 0))
                 ],
                 [
                     InlineKeyboardButton(text="Контанкты",
-                                         callback_data=main_cb.new("Contacts", "getContacts", 0, 0)),
-                    InlineKeyboardButton(text="Розыгрыши", callback_data=main_cb.new("Raffles", "getRaffles", 0, 0))
+                                         callback_data=main_cb.new("Contacts", "getContacts", 0, 0))
+                    # InlineKeyboardButton(text="Розыгрыши", callback_data=main_cb.new("Raffles", "getRaffles", 0, 0))
                 ]
             ]
         )
@@ -257,9 +272,9 @@ class MainForms:
             inline_keyboard=[
                 [
                     InlineKeyboardButton(text="BYN",
-                                         callback_data=main_cb.new(target, action, "BYN", 0)),
-                    InlineKeyboardButton(text="RUB",
-                                         callback_data=main_cb.new(target, action, "RUB", 0))
+                                         callback_data=main_cb.new(target, action, "BYN", 0))
+                    # InlineKeyboardButton(text="RUB",
+                    #                      callback_data=main_cb.new(target, action, "RUB", 0))
                 ],
                 [
                     InlineKeyboardButton(text="◀️ Назад", callback_data=main_cb.new("Main", 0, 0, 0))
@@ -272,9 +287,7 @@ class MainForms:
 
         data = {
             "Bitcoin": {"target": target, "action": action, "id": "Bitcoin", "editId": 0},
-            "Litecoin": {"target": target, "action": action, "id": "Litecoin", "editId": 0},
-            "USDT(trc20)": {"target": target, "action": action, "id": "USDT(trc20)", "editId": 0},
-            "Monero(XMR)": {"target": target, "action": action, "id": "Monero(XMR)", "editId": 0},
+            "USDT(trc20)": {"target": target, "action": action, "id": "USDT", "editId": 0},
         }
 
         return InlineKeyboardMarkup(
@@ -290,7 +303,7 @@ class MainForms:
                             ] + [
                                 [
                                     InlineKeyboardButton(text="◀️ Назад",
-                                                         callback_data=main_cb.new("Buy", "getBuy", 0, 0))
+                                                         callback_data=main_cb.new("Main", 0, 0, 0))
                                 ]
                             ]
         )
@@ -370,6 +383,100 @@ class MainForms:
             return False
 
     @staticmethod
+    async def buy_text(amount, state, abbreviation, message):
+        get_state_data = await state.get_data()
+        try:
+            try:
+                if len(amount) < 3:
+                    buy = await MainForms.buy(coin=get_state_data['coin'],
+                                              currency=get_state_data['currency'],
+                                              amount=get_state_data['amount'])
+
+                    try:
+                        buy_text = Check_currency(amount=amount,
+                                                  abbreviation=abbreviation,
+                                                  exchange_type=get_state_data['exchangeType'],
+                                                  buy=buy,
+                                                  currency=get_state_data['currency'],
+                                                  coin=get_state_data['coin'])
+                    except Exception as e:
+                        print(e)
+
+                    text = await buy_text.lessThreeCharacters()
+                    pass
+                    await UserStates.Wallet.set()
+                    await state.update_data(buy=buy)
+                    return text
+            except Exception as e:
+                pass
+            # if len(amount) < 3:
+            #
+            #     buy = await MainForms.buy(coin=get_state_data['coin'],
+            #                               currency=get_state_data['currency'],
+            #                               amount=get_state_data['amount'])
+            #     if get_state_data['exchangeType'] == "sell":
+            #         pass
+            #     else:
+            #         text = f"Сумма к получению: {get_state_data['amount']} {abbreviation}\n" \
+            #                f"Сумма к оплате: {buy} {get_state_data['currency']}\n\n" \
+            #                f"📝Введите {get_state_data['coin']}-адрес кошелька," \
+            #                f"куда вы хотите отправить " \
+            #                f"{get_state_data['amount']} {abbreviation}"
+            #         await UserStates.Wallet.set()
+            #         return text
+            # except Exception as e:
+            #     logging.error(f"Error buy_text amount < 3: {e}")
+            #
+            # try:
+            #     if amount.text.find("0") != -1:
+            #         buy = await MainForms.buy(coin=get_state_data['coin'],
+            #                                   currency=get_state_data['currency'],
+            #                                   amount=get_state_data['amount'])
+            #
+            #         if get_state_data['exchangeType'] == "sell":
+            #             pass
+            #             await UserStates.ERIP.set()
+            #         else:
+            #             text = f"Сумма к получению: {get_state_data['amount']} {abbreviation}\n" \
+            #                    f"Сумма к оплате: {buy} {get_state_data['currency']}\n\n" \
+            #                    f"📝Введите {get_state_data['coin']}-адрес кошелька," \
+            #                    f"куда вы хотите отправить " \
+            #                    f"{get_state_data['amount']} {abbreviation}"
+            #
+            #             await UserStates.Wallet.set()
+            #             return text
+            #
+            # except Exception as e:
+            #     logging.error(f"Error buy_text amount.text.find('0') != -1: {e}")
+            #
+            # try:
+            #     buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
+            #                                           currency=get_state_data['currency'],
+            #                                           amount=get_state_data['amount'])
+            #
+            #     if get_state_data['exchangeType'] == "sell":
+            #         pass
+            #         await UserStates.ERIP.set()
+            #     else:
+            #         text = f"Сумма к получению: {get_state_data['amount']} {abbreviation}\n" \
+            #                f"Сумма к оплате: {buy} {get_state_data['currency']} \n\n" \
+            #                f"📝Введите {get_state_data['coin']}-адрес кошелька," \
+            #                f"куда вы хотите отправить " \
+            #                f"{get_state_data['amount']} {abbreviation}"
+            #
+            #         await UserStates.Wallet.set()
+            #
+            #         return text
+            # except Exception as e:
+            #     logging.error(f"Error buy_text amount < 3: {e}")
+
+        except Exception as e:
+            await message.answer(text="Не вверно введены данные",
+                                 reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+            await UserStates.Buy.set()
+            logging.error(f"Error {e}")
+
+    @staticmethod
     async def process(callback: CallbackQuery = None, message: Message = None, state: FSMContext = None) -> None:
         if callback:
             if callback.data.startswith("main"):
@@ -378,7 +485,7 @@ class MainForms:
                 if data.get("target") == "Main":
                     await state.finish()
                     text = "🚀🚀🚀Название обменника🚀🚀🚀предлагает:\n\n" \
-                           "✳️Гарантированную скорость зачисления на кошелек до 3️⃣0️⃣ минут 🚀\n" \
+                           "✳️Гарантированную скорость зачисления на кошелек \nдо 3️⃣0️⃣ минут 🚀\n" \
                            "✳️Выгодный курс на обмен👌\n" \
                            "✳️Работаем 2️⃣4️⃣⚡️7️⃣\n" \
                            "✳️Индивидуальный подход 🤗 и круглосуточная поддержка оператора 😎📲\n" \
@@ -391,18 +498,23 @@ class MainForms:
                                                      reply_markup=await MainForms.main_ikb())
 
                 elif data.get("target") == "Buy":
-                    if data.get("action") == "getBuy":
-                        text = "Выберите валюту."
-                        await state.update_data(exchangeType="buy")
-                        await callback.message.edit_text(text=text,
-                                                         reply_markup=await MainForms.currency_ikb(
-                                                             target='Buy',
-                                                             action='currency_buy')
-                                                         )
+                    # if data.get("action") == "getBuy":
+                    #     text = "Выберите валюту."
+                    #     await state.update_data(exchangeType="buy")
+                    #     await callback.message.edit_text(text=text,
+                    #                                      reply_markup=await MainForms.currency_ikb(
+                    #                                          target='Buy',
+                    #                                          action='currency_buy')
+                    #                                      )
 
-                    elif data.get("action") == "currency_buy":
-                        await state.update_data(currency=data.get("id"))
-                        await state.update_data(currency_abbreviation=await MainForms.abbreviation(data.get("id")))
+                    if data.get("action") == "currency_buy":
+                        # await state.update_data(currency=data.get("id"))
+                        # await state.update_data(currency_abbreviation=await MainForms.abbreviation(data.get("id")))
+
+                        await state.update_data(exchangeType="buy")
+                        await state.update_data(currency="BYN")
+                        await state.update_data(currency_abbreviation="BYN")
+
                         text = "Выберите валюту которую вы хотите купить."
                         await callback.message.edit_text(text=text,
                                                          reply_markup=await MainForms.coin_ikb(target="Buy",
@@ -424,18 +536,23 @@ class MainForms:
                         await UserStates.UserPhoto.set()
 
                 elif data.get("target") == "Sell":
-                    if data.get("action") == "getSell":
-                        text = "Выберите валюту."
-                        await state.update_data(exchangeType="sell")
-                        await callback.message.edit_text(text=text,
-                                                         reply_markup=await MainForms.currency_ikb(
-                                                             target='Sell',
-                                                             action='currency_buy')
-                                                         )
+                    # if data.get("action") == "getSell":
+                    #     text = "Выберите валюту."
+                    #     await state.update_data(exchangeType="sell")
+                    #     await callback.message.edit_text(text=text,
+                    #                                      reply_markup=await MainForms.currency_ikb(
+                    #                                          target='Sell',
+                    #                                          action='currency_buy')
+                    #                                      )
 
-                    elif data.get("action") == "currency_buy":
-                        await state.update_data(currency=data.get("id"))
-                        await state.update_data(currency_abbreviation=await MainForms.abbreviation(data.get("id")))
+                    if data.get("action") == "currency_buy":
+                        # await state.update_data(currency=data.get("id"))
+                        # await state.update_data(currency_abbreviation=await MainForms.abbreviation(data.get("id")))
+
+                        await state.update_data(exchangeType="sell")
+                        await state.update_data(currency="BYN")
+                        await state.update_data(currency_abbreviation="BYN")
+
                         text = "Выберите валюту которую вы хотите продать."
                         await callback.message.edit_text(text=text,
                                                          reply_markup=await MainForms.coin_ikb(target="Sell",
@@ -444,6 +561,7 @@ class MainForms:
 
                     elif data.get('action') == "coin_buy":
                         coin_id = data.get('id')
+
                         await state.update_data(coin=coin_id)
                         text = f'✅ Введите нужную сумму в {coin_id} или в рублях\n' \
                                '🤖Оплата будет проверена автоматически.'
@@ -582,99 +700,128 @@ class MainForms:
                 #             logging.error(f"Error {e}")
 
                 if await state.get_state() == "UserStates:Buy":
-                    await state.update_data(amount=message.text)
-                    get_state_data = await state.get_data()
-                    abbreviation = await MainForms.abbreviation(get_state_data['coin'])
-
                     try:
-                        if len(message.text) < 3:
-                            buy = await MainForms.buy(coin=get_state_data['coin'],
-                                                      currency=get_state_data['currency'],
-                                                      amount=get_state_data['amount'])
+                        amount = await Check_currency.commaToDot(amount=message.text)
 
-                            if get_state_data['exchangeType'] == "sell":
-                                text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                       f"{buy} {get_state_data['currency']}" \
-                                    if get_state_data['exchangeType'] == "sell" \
-                                    else f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                         f"{message.text} {abbreviation}"
-
-                                await UserStates.ERIP.set()
-                            else:
-                                text = f"📝Введите {get_state_data['coin']}-адрес кошелька," \
-                                       f"куда вы хотите отправить " \
-                                       f"{get_state_data['amount']} {abbreviation}"
-                                await message.answer(text=f"Сумма к получению: {get_state_data['amount']} "
-                                                          f"{abbreviation}\n"
-                                                          f"Сумма к оплате: {buy} "
-                                                          f"{get_state_data['currency']}\n\n")
-
-                                await UserStates.Wallet.set()
-
-                        elif message.text.find("0") != -1:
-                            buy = await MainForms.buy(coin=get_state_data['coin'],
-                                                      currency=get_state_data['currency'],
-                                                      amount=get_state_data['amount'])
-
-                            if get_state_data['exchangeType'] == "sell":
-                                text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                       f"{buy} {get_state_data['currency']}" \
-                                    if get_state_data['exchangeType'] == "sell" \
-                                    else f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                         f"{buy} {get_state_data['currency']}"
-
-                                await UserStates.ERIP.set()
-                            else:
-                                text = f"📝Введите {get_state_data['coin']}-адрес кошелька," \
-                                       f"куда вы хотите отправить " \
-                                       f"{get_state_data['amount']} {abbreviation}"
-                                await message.answer(text=f"Сумма к получению: {get_state_data['amount']} "
-                                                          f"{abbreviation}\n"
-                                                          f"Сумма к оплате: {buy} "
-                                                          f"{get_state_data['currency']}\n\n")
-
-                                await UserStates.Wallet.set()
-
-                            # text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                            #        f"{buy} {get_state_data['currency']}"
-
-                        else:
-                            buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
-                                                                  currency=get_state_data['currency'],
-                                                                  amount=get_state_data['amount'])
-
-                            if get_state_data['exchangeType'] == "sell":
-                                text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                       f"{buy} {get_state_data['currency']}" \
-                                    if get_state_data['exchangeType'] == "sell" \
-                                    else f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                                         f"{buy} {abbreviation}"
-
-                                await UserStates.ERIP.set()
-                            else:
-                                text = f"📝Введите {get_state_data['coin']}-адрес кошелька,"\
-                                       f"куда вы хотите отправить "\
-                                       f"{get_state_data['amount']} {abbreviation}"
-
-                                await message.answer(text=f"Сумма к получению: {get_state_data['amount']} "
-                                                          f"{abbreviation}\n"
-                                                          f"Сумма к оплате: {buy} "
-                                                          f"{get_state_data['currency']}\n\n")
-
-                                await UserStates.Wallet.set()
-
-                            # text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить {buy} {abbreviation}"
+                        await state.update_data(amount=amount)
+                        get_state_data = await state.get_data()
+                        abbreviation = await MainForms.abbreviation(get_state_data['coin'])
+                        buy = await MainForms.buy(coin=get_state_data['coin'],
+                                                  currency=get_state_data['currency'],
+                                                  amount=get_state_data['amount'])
 
                         await state.update_data(buy=buy)
-                        await message.answer(text=text,
-                                             reply_markup=await MainForms.back_ikb(target="Main", action="0"),
-                                             parse_mode="HTML")
 
-                    except Exception as e:
+                        check_currency = Check_currency(amount=get_state_data['amount'],
+                                                        abbreviation=abbreviation,
+                                                        exchange_type=get_state_data['exchangeType'],
+                                                        buy=buy,
+                                                        currency=get_state_data['currency'],
+                                                        coin=get_state_data['coin'])
+
+                        if len(amount) < 3:
+                            get_text = await check_currency.get_text_Buy()
+
+                        elif amount.find("0") != -1:
+                            get_text = await check_currency.get_text_Buy()
+                        else:
+                            get_text = await check_currency.get_text_Buy(integerNumber=True, state=state)
+
+                        if get_text:
+                            await message.answer(text=get_text,
+                                                 reply_markup=await MainForms.back_ikb(target="Main", action="0"),
+                                                 parse_mode="HTML")
+                        else:
+                            await message.answer(text="Не вверно введены данные",
+                                                 reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                            await UserStates.Buy.set()
+                    except ValueError as e:
                         await message.answer(text="Не вверно введены данные",
                                              reply_markup=await MainForms.back_ikb(target="Main", action="0"))
                         await UserStates.Buy.set()
                         logging.error(f"Error {e}")
+
+                    # try:
+                    #     if len(message.text) < 3:
+                    #         buy = await MainForms.buy(coin=get_state_data['coin'],
+                    #                                   currency=get_state_data['currency'],
+                    #                                   amount=get_state_data['amount'])
+                    #
+                    #         if get_state_data['exchangeType'] == "sell":
+                    #             text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                    #                    f"{buy} {get_state_data['currency']}" \
+                    #                 if get_state_data['exchangeType'] == "sell" \
+                    #                 else f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                    #                      f"{message.text} {abbreviation}"
+                    #
+                    #             await UserStates.ERIP.set()
+                    #         else:
+                    #             text = f"Сумма к получению: {get_state_data['amount']} {abbreviation}\n" \
+                    #                    f"Сумма к оплате: {buy} {get_state_data['currency']}\n\n" \
+                    #                    f"📝Введите {get_state_data['coin']}-адрес кошелька," \
+                    #                    f"куда вы хотите отправить " \
+                    #                    f"{get_state_data['amount']} {abbreviation}"
+                    #             await UserStates.Wallet.set()
+                    #
+                    #     elif message.text.find("0") != -1:
+                    #         buy = await MainForms.buy(coin=get_state_data['coin'],
+                    #                                   currency=get_state_data['currency'],
+                    #                                   amount=get_state_data['amount'])
+                    #
+                    #         if get_state_data['exchangeType'] == "sell":
+                    #             text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                    #                    f"{buy} {get_state_data['currency']}" \
+                    #                 if get_state_data['exchangeType'] == "sell" \
+                    #                 else f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                    #                      f"{buy} {get_state_data['currency']}"
+                    #
+                    #             await UserStates.ERIP.set()
+                    #         else:
+                    #             text = f"Сумма к получению: {get_state_data['amount']} {abbreviation}\n" \
+                    #                    f"Сумма к оплате: {buy} {get_state_data['currency']}\n\n" \
+                    #                    f"📝Введите {get_state_data['coin']}-адрес кошелька," \
+                    #                    f"куда вы хотите отправить " \
+                    #                    f"{get_state_data['amount']} {abbreviation}"
+                    #
+                    #             await UserStates.Wallet.set()
+                    #
+                    #         # text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                    #         #        f"{buy} {get_state_data['currency']}"
+                    #
+                    #     else:
+                    #         buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
+                    #                                               currency=get_state_data['currency'],
+                    #                                               amount=get_state_data['amount'])
+                    #
+                    #         if get_state_data['exchangeType'] == "sell":
+                    #             text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                    #                    f"{buy} {get_state_data['currency']}" \
+                    #                 if get_state_data['exchangeType'] == "sell" \
+                    #                 else f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
+                    #                      f"{buy} {abbreviation}"
+                    #
+                    #             await UserStates.ERIP.set()
+                    #         else:
+                    #             text = f"Сумма к получению: {get_state_data['amount']} {abbreviation}\n"\
+                    #                    f"Сумма к оплате: {buy} {get_state_data['currency']} \n\n" \
+                    #                    f"📝Введите {get_state_data['coin']}-адрес кошелька,"\
+                    #                    f"куда вы хотите отправить "\
+                    #                    f"{get_state_data['amount']} {abbreviation}"
+                    #
+                    #             await UserStates.Wallet.set()
+                    #
+                    #         # text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить {buy} {abbreviation}"
+                    #
+                    #     await state.update_data(buy=buy)
+                    #     await message.answer(text=text,
+                    #                          reply_markup=await MainForms.back_ikb(target="Main", action="0"),
+                    #                          parse_mode="HTML")
+                    #
+                    # except Exception as e:
+                    #     await message.answer(text="Не вверно введены данные",
+                    #                          reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                    #     await UserStates.Buy.set()
+                    #     logging.error(f"Error {e}")
 
                 elif await state.get_state() == "UserStates:ERIP":
                     if re.match(r"^[0-9]{11}$", message.text):
@@ -726,6 +873,7 @@ class MainForms:
                                              reply_markup=await MainForms.confirmation_ikb(target="Buy",
                                                                                            action="confirmation_buy"),
                                              parse_mode="HTML")
+
                     else:
                         text = f"Адрес кошелька <i>{message.text}</i> нету в blockchain\n" \
                                f"Введите еще раз адрес"
@@ -745,14 +893,14 @@ class MainForms:
                             try:
                                 user = await CRUDUsers.get(user_id=message.from_user.id)
                                 get_state_data = await state.get_data()
-
                                 if get_state_data['exchangeType'] == "buy":
                                     purchase = await CRUDPurchases.add(purchase=PurchasesSchema(
                                         user_id=user.id,
-                                        currency=get_state_data['currency'],
-                                        quantity=get_state_data['amount'],
+                                        # currency=get_state_data['currency'],
+                                        currency="BYN",
+                                        quantity=float(get_state_data['amount']),
                                         coin=get_state_data['coin'],
-                                        price_per_unit=get_state_data['buy'],
+                                        price_per_unit=float(get_state_data['buy']),
                                         wallet=get_state_data['wallet']
                                     ))
                                     transaction = await CRUDTransactions.add(transaction=TransactionsSchema(
@@ -762,7 +910,8 @@ class MainForms:
                                 if get_state_data['exchangeType'] == "sell":
                                     sale = await CRUDSales.add(sale=SalesSchema(
                                         user_id=user.id,
-                                        currency=get_state_data['currency'],
+                                        # currency=get_state_data['currency'],
+                                        currency="BYN",
                                         quantity=get_state_data['amount'],
                                         coin=get_state_data['coin'],
                                         price_per_unit=get_state_data['buy'],

@@ -23,7 +23,7 @@ class Purchases(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     currency = Column(String(10))  # Валюта
-    quantity = Column(Integer)  # Количество
+    quantity = Column(Float)  # Количество
     coin = Column(String(10))
     price_per_unit = Column(Float)  # Цена за единицу
     date = Column(TIMESTAMP, default=datetime.now())  # Дата транзакции
@@ -39,7 +39,7 @@ class Sales(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     currency = Column(String(10))
-    quantity = Column(Integer)
+    quantity = Column(Float)
     coin = Column(String(10))
     price_per_unit = Column(Float)
     date = Column(TIMESTAMP, default=datetime.now())

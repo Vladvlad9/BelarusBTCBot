@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, validator
 class SalesSchema(BaseModel):
     user_id: int = Field(ge=1)
     currency: str
-    quantity: int
+    quantity: float
     coin: str
     price_per_unit: float
     erip: str
