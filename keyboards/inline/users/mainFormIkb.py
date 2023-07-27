@@ -4,11 +4,13 @@ import re
 from decimal import Decimal
 
 from aiogram.dispatcher import FSMContext
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message, ReplyKeyboardMarkup, \
+    KeyboardButton
 from aiogram.utils.callback_data import CallbackData
 from aiogram.utils.exceptions import BadRequest
 
 from config import CONFIG
+from config.config import CONFIGTEXT
 from crud import CRUDUsers
 from crud.purchaseCRUD import CRUDPurchases
 from crud.saleCRUD import CRUDSales
@@ -23,6 +25,23 @@ main_cb = CallbackData("main", "target", "action", "id", "editId")
 
 
 class MainForms:
+
+    @staticmethod
+    async def main_kb() -> ReplyKeyboardMarkup:
+        return ReplyKeyboardMarkup(
+            row_width=2,
+            resize_keyboard=True,
+            one_time_keyboard=True,
+            keyboard=[
+                [
+                    KeyboardButton(text='Купить 💰'),
+                    KeyboardButton(text='Продать 📈'),
+                    KeyboardButton(text='Контакты 💬'),
+
+                ]
+            ]
+        )
+
     @staticmethod
     async def receipt(state, message) -> str:
         get_state_data = await state.get_data()
@@ -123,8 +142,9 @@ class MainForms:
 
     @staticmethod
     async def confirmation_timer(message):
-        await asyncio.sleep(3)
-        await message.answer(text="Заявка успешно создана",
+        await asyncio.sleep(1)
+        await message.answer(text="Заявка успешно создана\n\n"
+                                  f"{CONFIGTEXT.MAIN_FORM.TEXT}",
                              reply_markup=await MainForms.main_ikb())
 
     @staticmethod
@@ -259,7 +279,7 @@ class MainForms:
                                          callback_data=main_cb.new("Sell", "currency_buy", 0, 0))
                 ],
                 [
-                    InlineKeyboardButton(text="Контанкты",
+                    InlineKeyboardButton(text="Контакты",
                                          callback_data=main_cb.new("Contacts", "getContacts", 0, 0))
                     # InlineKeyboardButton(text="Розыгрыши", callback_data=main_cb.new("Raffles", "getRaffles", 0, 0))
                 ]
@@ -375,108 +395,6 @@ class MainForms:
         )
 
     @staticmethod
-    async def isfloat(value: str):
-        try:
-            float(value)
-            return True
-        except ValueError:
-            return False
-
-    @staticmethod
-    async def buy_text(amount, state, abbreviation, message):
-        get_state_data = await state.get_data()
-        try:
-            try:
-                if len(amount) < 3:
-                    buy = await MainForms.buy(coin=get_state_data['coin'],
-                                              currency=get_state_data['currency'],
-                                              amount=get_state_data['amount'])
-
-                    try:
-                        buy_text = Check_currency(amount=amount,
-                                                  abbreviation=abbreviation,
-                                                  exchange_type=get_state_data['exchangeType'],
-                                                  buy=buy,
-                                                  currency=get_state_data['currency'],
-                                                  coin=get_state_data['coin'])
-                    except Exception as e:
-                        print(e)
-
-                    text = await buy_text.lessThreeCharacters()
-                    pass
-                    await UserStates.Wallet.set()
-                    await state.update_data(buy=buy)
-                    return text
-            except Exception as e:
-                pass
-            # if len(amount) < 3:
-            #
-            #     buy = await MainForms.buy(coin=get_state_data['coin'],
-            #                               currency=get_state_data['currency'],
-            #                               amount=get_state_data['amount'])
-            #     if get_state_data['exchangeType'] == "sell":
-            #         pass
-            #     else:
-            #         text = f"Сумма к получению: {get_state_data['amount']} {abbreviation}\n" \
-            #                f"Сумма к оплате: {buy} {get_state_data['currency']}\n\n" \
-            #                f"📝Введите {get_state_data['coin']}-адрес кошелька," \
-            #                f"куда вы хотите отправить " \
-            #                f"{get_state_data['amount']} {abbreviation}"
-            #         await UserStates.Wallet.set()
-            #         return text
-            # except Exception as e:
-            #     logging.error(f"Error buy_text amount < 3: {e}")
-            #
-            # try:
-            #     if amount.text.find("0") != -1:
-            #         buy = await MainForms.buy(coin=get_state_data['coin'],
-            #                                   currency=get_state_data['currency'],
-            #                                   amount=get_state_data['amount'])
-            #
-            #         if get_state_data['exchangeType'] == "sell":
-            #             pass
-            #             await UserStates.ERIP.set()
-            #         else:
-            #             text = f"Сумма к получению: {get_state_data['amount']} {abbreviation}\n" \
-            #                    f"Сумма к оплате: {buy} {get_state_data['currency']}\n\n" \
-            #                    f"📝Введите {get_state_data['coin']}-адрес кошелька," \
-            #                    f"куда вы хотите отправить " \
-            #                    f"{get_state_data['amount']} {abbreviation}"
-            #
-            #             await UserStates.Wallet.set()
-            #             return text
-            #
-            # except Exception as e:
-            #     logging.error(f"Error buy_text amount.text.find('0') != -1: {e}")
-            #
-            # try:
-            #     buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
-            #                                           currency=get_state_data['currency'],
-            #                                           amount=get_state_data['amount'])
-            #
-            #     if get_state_data['exchangeType'] == "sell":
-            #         pass
-            #         await UserStates.ERIP.set()
-            #     else:
-            #         text = f"Сумма к получению: {get_state_data['amount']} {abbreviation}\n" \
-            #                f"Сумма к оплате: {buy} {get_state_data['currency']} \n\n" \
-            #                f"📝Введите {get_state_data['coin']}-адрес кошелька," \
-            #                f"куда вы хотите отправить " \
-            #                f"{get_state_data['amount']} {abbreviation}"
-            #
-            #         await UserStates.Wallet.set()
-            #
-            #         return text
-            # except Exception as e:
-            #     logging.error(f"Error buy_text amount < 3: {e}")
-
-        except Exception as e:
-            await message.answer(text="Не вверно введены данные",
-                                 reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-            await UserStates.Buy.set()
-            logging.error(f"Error {e}")
-
-    @staticmethod
     async def process(callback: CallbackQuery = None, message: Message = None, state: FSMContext = None) -> None:
         if callback:
             if callback.data.startswith("main"):
@@ -484,18 +402,8 @@ class MainForms:
 
                 if data.get("target") == "Main":
                     await state.finish()
-                    text = "🚀🚀🚀Название обменника🚀🚀🚀предлагает:\n\n" \
-                           "✳️Гарантированную скорость зачисления на кошелек \nдо 3️⃣0️⃣ минут 🚀\n" \
-                           "✳️Выгодный курс на обмен👌\n" \
-                           "✳️Работаем 2️⃣4️⃣⚡️7️⃣\n" \
-                           "✳️Индивидуальный подход 🤗 и круглосуточная поддержка оператора 😎📲\n" \
-                           "✳️Конфиденциальность 🔐\n" \
-                           "Мы ценим Вас😜 и Ваше время🚀и гарантированную полную безопасность 🔐\n\n" \
-                           "Наш бот🤖 -\n" \
-                           "Наш оператор😎 -\n\n" \
-                           "😎С уважением, Ваш 😎"
-                    await callback.message.edit_text(text=text,
-                                                     reply_markup=await MainForms.main_ikb())
+                    await callback.message.answer(text=CONFIGTEXT.MAIN_FORM.TEXT,
+                                                  reply_markup=await MainForms.main_kb())
 
                 elif data.get("target") == "Buy":
                     # if data.get("action") == "getBuy":
@@ -510,11 +418,6 @@ class MainForms:
                     if data.get("action") == "currency_buy":
                         # await state.update_data(currency=data.get("id"))
                         # await state.update_data(currency_abbreviation=await MainForms.abbreviation(data.get("id")))
-
-                        await state.update_data(exchangeType="buy")
-                        await state.update_data(currency="BYN")
-                        await state.update_data(currency_abbreviation="BYN")
-
                         text = "Выберите валюту которую вы хотите купить."
                         await callback.message.edit_text(text=text,
                                                          reply_markup=await MainForms.coin_ikb(target="Buy",
@@ -523,6 +426,11 @@ class MainForms:
 
                     elif data.get('action') == "coin_buy":
                         coin_id = data.get('id')
+
+                        await state.update_data(exchangeType="buy")
+                        await state.update_data(currency="BYN")
+                        await state.update_data(currency_abbreviation="BYN")
+
                         await state.update_data(coin=coin_id)
                         text = f'✅ Введите нужную сумму в {coin_id} или в рублях\n' \
                                '🤖Оплата будет проверена автоматически.'
@@ -920,6 +828,7 @@ class MainForms:
                                     transaction = await CRUDTransactions.add(transaction=TransactionsSchema(
                                         sale_id=sale.id
                                     ))
+
                             except Exception as e:
                                 logging.error(f'Error add что происодит я хз in db: {e}')
 
