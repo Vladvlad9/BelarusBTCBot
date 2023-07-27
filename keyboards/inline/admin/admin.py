@@ -3,6 +3,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQu
 from aiogram.utils.exceptions import BadRequest
 
 from config import CONFIG
+from config.config import CONFIGTEXT
 # from crud import CRUDUsers, CRUDTransaction, CRUDCurrency, CRUDOperation
 from handlers.AllCallbacks import admin_cb
 from loader import bot
@@ -378,3 +379,18 @@ class AdminForm:
                                                          reply_markup=await AdminForm.change_ikb(
                                                              get_change="RequisitesRUS")
                                                          )
+
+        if message:
+            await message.delete()
+
+            try:
+                await bot.delete_message(
+                    chat_id=message.from_user.id,
+                    message_id=message.message_id - 1
+                )
+            except BadRequest:
+                pass
+
+            if state:
+                if await state.get_state() == "AdminState:COMMISSION":
+                    pass
