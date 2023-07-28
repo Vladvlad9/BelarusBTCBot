@@ -18,7 +18,7 @@ from random import choice
 from PIL import ImageFont, ImageDraw, Image
 
 
-def create_captcha(text: str) -> str:
+async def create_captcha(text: str) -> str:
     image = Image.new('RGB', (200, 100), color='white')
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype('font/arial.ttf', size=30)
@@ -29,28 +29,52 @@ def create_captcha(text: str) -> str:
     return file_path
 
 
+async def get_captcha() -> dict:
+    captcha_text = ''.join([random.choice(string.ascii_letters) for _ in range(6)])
+    file_path = await create_captcha(captcha_text)
+    return {"captcha_text": captcha_text, "file_path": file_path}
+
+
 @dp.message_handler(commands=["start"], state=UserStates.all_states)
 async def registration_starts_state(message: types.Message):
-    await message.delete()
-    await message.answer(text=CONFIGTEXT.MAIN_FORM.TEXT, reply_markup=await MainForms.main_kb())
+    user = await CRUDUsers.get(user_id=message.from_user.id)
+    if user:
+        if user.check_captcha:
+            await message.delete()
+            await message.answer(text=CONFIGTEXT.MAIN_FORM.TEXT, reply_markup=await MainForms.main_kb())
+        else:
+            captcha = await get_captcha()
+            await message.answer(text="Капча введена неверно, попробуйте еще раз")
+            await bot.send_photo(message.chat.id, open(captcha["file_path"], 'rb'))
+            await UserStates.Captcha.set()
+    else:
+        await message.answer(text="что то я тебя не знаю!")
 
 
 @dp.message_handler(commands=["start"])
 async def registration_start(message: types.Message):
     user = await CRUDUsers.get(user_id=message.from_user.id)
     if user:
-        await message.delete()
-        await message.answer(text=CONFIGTEXT.MAIN_FORM.TEXT,
-                             reply_markup=await MainForms.main_kb())
+        if user.check_captcha:
+            await message.delete()
+            await message.answer(text=CONFIGTEXT.MAIN_FORM.TEXT,
+                                 reply_markup=await MainForms.main_kb())
+        else:
+            captcha = await get_captcha()
+            await UserStates.Captcha.set()
+            await bot.send_photo(chat_id=message.chat.id,
+                                 photo=open(captcha["file_path"], 'rb'),
+                                 caption="В целях безопасности🔐 \n"
+                                         "Подтвердить что вы не бот😎✅, чтобы пользоваться ресурсом 🤖Bot🤖\n"
+                                         "Введите символы с картинки")
     else:
-        captcha_text = ''.join([random.choice(string.ascii_letters) for _ in range(6)])
-        file_path = create_captcha(captcha_text)
+        captcha = await get_captcha()
 
         await CRUDUsers.add(user=UserSchema(user_id=message.from_user.id,
-                                            captcha=captcha_text))
-
+                                            captcha=captcha["captcha_text"]))
+        await UserStates.Captcha.set()
         await bot.send_photo(chat_id=message.chat.id,
-                             photo=open(file_path, 'rb'),
+                             photo=open(captcha["file_path"], 'rb'),
                              caption="В целях безопасности🔐 \n"
                                      "Подтвердить что вы не бот😎✅, чтобы пользоваться ресурсом 🤖Bot🤖\n"
                                      "Введите символы с картинки")
@@ -82,29 +106,23 @@ async def Contacts(message: types.Message):
     await message.answer(text=text,
                          reply_markup=await MainForms.contacts_ikb())
 
-# @dp.message_handler()
-# async def check_captcha(message: types.Message):
-#     user = await CRUDUsers.get(user_id=message.from_user.id)
-#     if message.text == user.captcha:
-#         text = "🚀🚀🚀Название обменника🚀🚀🚀предлагает:\n\n" \
-#                "✳️Гарантированную скорость зачисления на кошелек\n до 3️⃣0️⃣ минут 🚀\n" \
-#                "✳️Выгодный курс на обмен👌\n" \
-#                "✳️Работаем 2️⃣4️⃣⚡️7️⃣\n" \
-#                "✳️Индивидуальный подход 🤗 и круглосуточная поддержка оператора 😎📲\n" \
-#                "✳️Конфиденциальность 🔐\n" \
-#                "Мы ценим Вас😜 и Ваше время🚀и гарантированную полную безопасность 🔐\n\n" \
-#                "Наш бот🤖 -\n" \
-#                "Наш оператор😎 -\n\n" \
-#                "😎С уважением, Ваш 😎"
-#         await message.delete()
-#         await message.answer(text=text, reply_markup=await MainForms.main_ikb())
-#     else:
-#         await message.reply("Капча введена неверно, попробуйте еще раз")
-#         captcha_text = ''.join([random.choice(string.ascii_letters) for _ in range(6)])
-#         file_path = create_captcha(captcha_text)
-#         user.captcha = captcha_text
-#         await CRUDUsers.update(user=user)
-#         await bot.send_photo(message.chat.id, open(file_path, 'rb'))
+
+@dp.message_handler(state=UserStates.Captcha)
+async def check_captcha(message: types.Message, state: FSMContext):
+    user = await CRUDUsers.get(user_id=message.from_user.id)
+    if message.text == user.captcha:
+        await message.delete()
+        await message.answer(text=CONFIGTEXT.MAIN_FORM.TEXT, reply_markup=await MainForms.main_kb())
+        user.check_captcha = True
+        await CRUDUsers.update(user=user)
+        await state.finish()
+    else:
+        await message.reply("Капча введена неверно, попробуйте еще раз")
+        captcha = await get_captcha()
+        user.captcha = captcha["captcha_text"]
+        await CRUDUsers.update(user=user)
+        await bot.send_photo(message.chat.id, open(captcha["file_path"], 'rb'))
+        await UserStates.Captcha.set()
 
 
 @dp.callback_query_handler(main_cb.filter())
