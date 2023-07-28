@@ -38,11 +38,16 @@ class CRUDSales(object):
     @staticmethod
     @create_async_session
     async def get(id: int = None,
+                  sale_id: int = None,
                   session: AsyncSession = None) -> SalesInDBSchema | None:
-        sales = await session.execute(
-            select(Sales)
-            .where(Sales.id == id).order_by(Sales.id)
-        )
+        if sale_id:
+            sales = await session.execute(
+                select(Sales).where(Sales.sale_id == sale_id)
+            )
+        else:
+            sales = await session.execute(
+                select(Sales).where(Sales.id == id).order_by(Sales.id)
+            )
         if sale := sales.first():
             return SalesInDBSchema(**sale[0].__dict__)
 

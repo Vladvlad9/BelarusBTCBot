@@ -41,7 +41,7 @@ class CRUDPurchases(object):
                   session: AsyncSession = None) -> PurchasesInDBSchema | None:
         purchases = await session.execute(
             select(Purchases)
-            .where(Purchases.id == id).order_by(Purchases.id)
+            .where(Purchases.id == id)
         )
         if purchase := purchases.first():
             return PurchasesInDBSchema(**purchase[0].__dict__)

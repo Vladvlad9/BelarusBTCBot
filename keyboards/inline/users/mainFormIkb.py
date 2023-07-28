@@ -63,32 +63,7 @@ class MainForms:
     async def receipt(state, message) -> str:
         get_state_data = await state.get_data()
 
-        if get_state_data['exchangeType'] == "buy":
-            sell = f"<b>Продаете</b>: {get_state_data['buy']} {get_state_data['currency_abbreviation']}\n"
-            get = f"💵<b>Получаете</b>: {get_state_data['amount']} {get_state_data['coin']}\n"
-        else:
-            sell = f"<b>Продаете</b>: {get_state_data['amount']} {get_state_data['coin']}\n"
-            get = f"💵<b>Получаете</b>: {get_state_data['buy']} {get_state_data['currency_abbreviation']}\n"
-
-        text = f"<b>✅Заявка №449112 успешно создана.</b>\n\n" \
-               f"{sell}\n" \
-               f"<b>ЕРИП реквизиты</b>: {get_state_data['erip']}\n\n" \
-               f"Ваш ранг: 👶, скидка 0.0%\n\n" \
-               f"{get}\n" \
-               f"<b>Реквизиты для перевода {get_state_data['coin']}</b>:\n\n" \
-               f"<code>{message.text}</code>\n\n" \
-               f"⏳<b>Заявка действительна</b>: 15 минут\n\n" \
-               f'☑️После успешного перевода денег по указанным реквизитам нажмите на кнопку ' \
-               f'"<b>Я оплатил(а)</b>" или же вы можете отменить данную заявку, ' \
-               f'нажав на кнопку "<b>Отменить заявку</b>".'
-
-        return text
-
-    @staticmethod
-    async def receipt2(state, message) -> str:
-        get_state_data = await state.get_data()
-
-        text = f"<b>✅Заявка №449112 успешно создана.</b>\n\n" \
+        text = f"<b>✅Заявка успешно создана.</b>\n\n" \
                f"💵<b>Получаете</b>: {get_state_data['amount']} {get_state_data['coin']}\n\n" \
                f"<b>{get_state_data['coin']}-адрес</b>:\n" \
                f"<code>{message.text}</code>\n\n" \
@@ -106,39 +81,20 @@ class MainForms:
                f'"<b>Я оплатил(а)</b>" или же вы можете отменить данную заявку, ' \
                f'нажав на кнопку "<b>Отменить заявку</b>".'
 
-        # if get_state_data['exchangeType'] == "buy":
-        #     sell = f"<b>Продаете</b>: {get_state_data['buy']} {get_state_data['currency_abbreviation']}\n"
-        #     get = f"💵<b>Получаете</b>: {get_state_data['amount']} {get_state_data['coin']}\n"
-        # else:
-        #     sell = f"<b>Продаете</b>: {get_state_data['amount']} {get_state_data['coin']}\n"
-        #     get = f"💵<b>Получаете</b>: {get_state_data['buy']} {get_state_data['currency_abbreviation']}\n"
-        #
-        # text = f"<b>✅Заявка №449112 успешно создана.</b>\n\n" \
-        #        f"{sell}\n" \
-        #        f"<b>ЕРИП реквизиты</b>: {get_state_data['erip']}\n\n" \
-        #        f"Ваш ранг: 👶, скидка 0.0%\n\n" \
-        #        f"{get}\n" \
-        #        f"<b>Реквизиты для перевода {get_state_data['coin']}</b>:\n\n" \
-        #        f"<code>{message.text}</code>\n\n" \
-        #        f"⏳<b>Заявка действительна</b>: 15 минут\n\n" \
-        #        f'☑️После успешного перевода денег по указанным реквизитам нажмите на кнопку ' \
-        #        f'"<b>Я оплатил(а)</b>" или же вы можете отменить данную заявку, ' \
-        #        f'нажав на кнопку "<b>Отменить заявку</b>".'
-
         return text
 
     @staticmethod
-    async def messageAdministrators(message, state, photo):
+    async def messageAdministrators(message, state, photo, applicationNumber):
         state_data = await state.get_data()
 
         if state_data['exchangeType'] == "sell":
-            text = f"Заявка № {1}\n\n" \
+            text = f"Заявка № {applicationNumber}\n\n" \
                    f"Пользователь <code>{message.from_user.first_name}</code> хочет " \
                    f"<code>продать {state_data['amount']} {state_data['coin']}</code>\n\n" \
                    f"ЕРИП: <code>{state_data['erip']}</code>\n\n" \
                    f"Получите: {state_data['buy']} {state_data['currency_abbreviation']}\n\n"
         else:
-            text = f"Заявка № {1}\n\n" \
+            text = f"Заявка № {applicationNumber}\n\n" \
                    f"Пользователь <code>{message.from_user.first_name}</code> хочет " \
                    f"<code>купить {state_data['amount']} {state_data['coin']}</code>\n\n" \
                    f"Кошелек: <code>{state_data['wallet']}</code>\n\n" \
@@ -716,14 +672,12 @@ class MainForms:
                 elif await state.get_state() == "UserStates:Wallet":
                     user = await CRUDUsers.get(user_id=message.from_user.id)
                     if user.transaction_timer:
-                        #await MainForms.send_timer_message(chat_id=message.from_user.id, state=state)
-
                         wallet = await Cryptocurrency.Check_Wallet(btc_address=message.text)
                         get_state_data = await state.get_data()
                         if wallet:
                             await state.update_data(wallet=message.text)
                             if get_state_data['exchangeType'] == "buy":
-                                text = await MainForms.receipt2(state=state, message=message)
+                                text = await MainForms.receipt(state=state, message=message)
 
                             await message.answer(text=text,
                                                  reply_markup=await MainForms.confirmation_ikb(target="Buy",
@@ -764,7 +718,7 @@ class MainForms:
                                     if get_state_data['exchangeType'] == "buy":
                                         purchase = await CRUDPurchases.add(purchase=PurchasesSchema(
                                             user_id=user.id,
-                                            # currency=get_state_data['currency'],
+                                            purchase_id=1,
                                             currency="BYN",
                                             quantity=float(get_state_data['amount']),
                                             coin=get_state_data['coin'],
@@ -774,11 +728,13 @@ class MainForms:
                                         transaction = await CRUDTransactions.add(transaction=TransactionsSchema(
                                             purchase_id=purchase.id
                                         ))
+                                        applicationNumber = await CRUDPurchases.get(id=purchase.id)
+                                        applicationNumber_id = applicationNumber.purchase_id
 
                                     if get_state_data['exchangeType'] == "sell":
                                         sale = await CRUDSales.add(sale=SalesSchema(
                                             user_id=user.id,
-                                            # currency=get_state_data['currency'],
+                                            sale_id=1,
                                             currency="BYN",
                                             quantity=get_state_data['amount'],
                                             coin=get_state_data['coin'],
@@ -788,18 +744,25 @@ class MainForms:
                                         transaction = await CRUDTransactions.add(transaction=TransactionsSchema(
                                             sale_id=sale.id
                                         ))
+                                        applicationNumber = await CRUDSales.get(sale_id=sale.id)
+                                        applicationNumber_id = applicationNumber.sale_id
 
                                 except Exception as e:
                                     logging.error(f'Error add что происодит я хз in db: {e}')
 
                                 try:
                                     if transaction:
+                                        get_applicationNumber = 1
                                         await bot.download_file(file_path=get_photo.file_path,
-                                                                destination=f'user_check/{1}_{message.from_user.id}.jpg',
+                                                                destination=f'user_check/{get_applicationNumber}'
+                                                                            f'_{message.from_user.id}.jpg',
                                                                 timeout=12,
                                                                 chunk_size=1215000)
 
-                                        await MainForms.messageAdministrators(message=message, state=state, photo=photo)
+                                        await MainForms.messageAdministrators(message=message,
+                                                                              state=state,
+                                                                              photo=photo,
+                                                                              applicationNumber=applicationNumber)
                                         user.transaction_timer = False
                                         await CRUDUsers.update(user=user)
                                         await state.finish()

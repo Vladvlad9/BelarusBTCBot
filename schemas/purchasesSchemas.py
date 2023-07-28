@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, validator
 
 
 class PurchasesSchema(BaseModel):
-    purchase_id: int = Field(ge=1)
+    purchase_id: int
     user_id: int = Field(ge=1)
     currency: str
     quantity: float
