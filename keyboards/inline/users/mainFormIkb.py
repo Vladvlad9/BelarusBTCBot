@@ -43,7 +43,6 @@ class MainForms:
             await CRUDUsers.update(user=user)
             return
 
-
     @staticmethod
     async def main_kb() -> ReplyKeyboardMarkup:
         return ReplyKeyboardMarkup(
@@ -458,8 +457,18 @@ class MainForms:
                                                          reply_markup=await MainForms.back_ikb("Buy", "currency_buy"))
 
                     elif data.get('action') == "confirmation_buy":
-                        await callback.message.edit_text(text="📎 Отправьте скрин перевода, либо чек оплаты!")
-                        await UserStates.UserPhoto.set()
+                        user = await CRUDUsers.get(user_id=callback.from_user.id)
+                        if user.transaction_timer:
+                            await callback.message.edit_text(text="📎 Отправьте скрин перевода, либо чек оплаты!")
+                            await UserStates.UserPhoto.set()
+                        else:
+                            await callback.message.delete()
+                            await callback.message.answer(text=f"У вас вышло время на оплату!\n\n"
+                                                               f"{CONFIGTEXT.MAIN_FORM.TEXT}",
+                                                          reply_markup=await MainForms.main_kb())
+                            user.transaction_timer = False
+                            await CRUDUsers.update(user=user)
+                            await state.finish()
 
                 elif data.get("target") == "Sell":
                     # if data.get("action") == "getSell":
@@ -498,8 +507,18 @@ class MainForms:
                                                                                                action="currency_buy"))
 
                     elif data.get('action') == "confirmation_buy":
-                        await callback.message.edit_text(text="📎 Отправьте скрин перевода, либо чек оплаты!")
-                        await UserStates.UserPhoto.set()
+                        user = await CRUDUsers.get(user_id=callback.from_user.id)
+                        if user.transaction_timer:
+                            await callback.message.edit_text(text="📎 Отправьте скрин перевода, либо чек оплаты!")
+                            await UserStates.UserPhoto.set()
+                        else:
+                            await callback.message.delete()
+                            await callback.message.answer(text=f"У вас вышло время на оплату!\n\n"
+                                                               f"{CONFIGTEXT.MAIN_FORM.TEXT}",
+                                                          reply_markup=await MainForms.main_kb())
+                            user.transaction_timer = False
+                            await CRUDUsers.update(user=user)
+                            await state.finish()
 
                 elif data.get("target") == "Contacts":
                     if data.get("action") == "getContacts":
@@ -525,106 +544,6 @@ class MainForms:
                 pass
 
             if state:
-                # if await state.get_state() == "UserStates:Buy":
-                #     await state.update_data(amount=message.text)
-                #     get_state_data = await state.get_data()
-                #     abbreviation = await MainForms.abbreviation(get_state_data['coin'])
-                #
-                #     if get_state_data['currency'] == "RUB":
-                #
-                #         try:
-                #             if len(message.text) < 3:
-                #                 buy = await MainForms.buy(coin=get_state_data['coin'],
-                #                                           currency=get_state_data['currency'],
-                #                                           amount=get_state_data['amount'])
-                #
-                #                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                #                        f"{message.text} {abbreviation}"
-                #
-                #                 await state.update_data(buy=buy)
-                #                 await message.answer(text=text,
-                #                                      reply_markup=await MainForms.back_ikb(target="Main", action="0"),
-                #                                      parse_mode="HTML")
-                #                 await UserStates.ERIP.set()
-                #
-                #             elif message.text.find("0") != -1:
-                #                 buy = await MainForms.buy(coin=get_state_data['coin'],
-                #                                           currency=get_state_data['currency'],
-                #                                           amount=get_state_data['amount'])
-                #
-                #                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                #                        f"{buy} {get_state_data['currency']}"
-                #
-                #                 await state.update_data(buy=buy)
-                #                 await message.answer(text=text,
-                #                                      reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                #                 await UserStates.ERIP.set()
-                #
-                #             else:
-                #                 buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
-                #                                                       currency=get_state_data['currency'],
-                #                                                       amount=get_state_data['amount'])
-                #
-                #                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                #                        f"{buy} {abbreviation}"
-                #
-                #                 await state.update_data(buy=buy)
-                #                 await message.answer(text=text,
-                #                                      reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                #                 await UserStates.ERIP.set()
-                #         except Exception as e:
-                #             await message.answer(text="Не вверно введены данные",
-                #                                  reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                #             await UserStates.Buy.set()
-                #             logging.error(f"Error {e}")
-                #
-                #     elif get_state_data['currency'] == 'BYN':
-                #         try:
-                #             if len(message.text) < 3:
-                #                 buy = await MainForms.buy(coin=get_state_data['coin'],
-                #                                           currency=get_state_data['currency'],
-                #                                           amount=get_state_data['amount'])
-                #
-                #                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                #                        f"{message.text} {abbreviation}"
-                #
-                #                 await state.update_data(buy=buy)
-                #                 await message.answer(text=text,
-                #                                      reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                #                 await UserStates.ERIP.set()
-                #
-                #             elif message.text.find("0") != -1:
-                #                 buy = await MainForms.buy(coin=get_state_data['coin'],
-                #                                           currency=get_state_data['currency'],
-                #                                           amount=get_state_data['amount'])
-                #
-                #                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                #                        f"{buy} {get_state_data['currency']}"
-                #
-                #                 await state.update_data(buy=buy)
-                #                 await message.answer(text=text,
-                #                                      reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                #                 await UserStates.ERIP.set()
-                #
-                #             else:
-                #                 buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
-                #                                                       currency=get_state_data['currency'],
-                #                                                       amount=get_state_data['amount'])
-                #
-                #                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                #                        f"{buy} {abbreviation}"
-                #
-                #                 await state.update_data(buy=buy)
-                #                 await message.answer(text=text,
-                #                                      reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                #                 await UserStates.ERIP.set()
-                #         except Exception as e:
-                #             await message.answer(text="Не вверно введена сумма\n"
-                #                                       "Повторите попытку",
-                #                                  reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                #             await UserStates.Buy.set()
-                #             logging.error(f"Error {e}")
-
                 if await state.get_state() == "UserStates:Buy":
                     try:
                         amount = await Check_currency.commaToDot(amount=message.text)
@@ -657,6 +576,9 @@ class MainForms:
                             await message.answer(text=get_text,
                                                  reply_markup=await MainForms.back_ikb(target="Main", action="0"),
                                                  parse_mode="HTML")
+                            user = await CRUDUsers.get(user_id=message.from_user.id)
+                            user.transaction_timer = True
+                            await CRUDUsers.update(user=user)
                         else:
                             await message.answer(text="Не вверно введены данные",
                                                  reply_markup=await MainForms.back_ikb(target="Main", action="0"))
@@ -789,89 +711,107 @@ class MainForms:
 
                 elif await state.get_state() == "UserStates:Wallet":
                     user = await CRUDUsers.get(user_id=message.from_user.id)
-                    user.transaction_timer = True
-                    await CRUDUsers.update(user=user)
-                    #await MainForms.send_timer_message(chat_id=message.from_user.id, state=state)
+                    if user.transaction_timer:
+                        #await MainForms.send_timer_message(chat_id=message.from_user.id, state=state)
 
-                    wallet = await Cryptocurrency.Check_Wallet(btc_address=message.text)
-                    get_state_data = await state.get_data()
-                    if wallet:
-                        await state.update_data(wallet=message.text)
-                        if get_state_data['exchangeType'] == "buy":
-                            text = await MainForms.receipt2(state=state, message=message)
+                        wallet = await Cryptocurrency.Check_Wallet(btc_address=message.text)
+                        get_state_data = await state.get_data()
+                        if wallet:
+                            await state.update_data(wallet=message.text)
+                            if get_state_data['exchangeType'] == "buy":
+                                text = await MainForms.receipt2(state=state, message=message)
 
-                        await message.answer(text=text,
-                                             reply_markup=await MainForms.confirmation_ikb(target="Buy",
-                                                                                           action="confirmation_buy"),
-                                             parse_mode="HTML")
+                            await message.answer(text=text,
+                                                 reply_markup=await MainForms.confirmation_ikb(target="Buy",
+                                                                                               action="confirmation_buy"),
+                                                 parse_mode="HTML")
 
-                        await asyncio.sleep(int(60))
-                        await MainForms.send_timer_message(chat_id=message.from_user.id, state=state)
+                            await asyncio.sleep(int(60))
+                            await MainForms.send_timer_message(chat_id=message.from_user.id, state=state)
 
+                        else:
+                            text = f"Адрес кошелька <i>{message.text}</i> нету в blockchain\n" \
+                                   f"Введите еще раз адрес"
+                            await message.answer(text=text, parse_mode="HTML",
+                                                 reply_markup=await MainForms.back_ikb(target="Main", action=""))
                     else:
-                        text = f"Адрес кошелька <i>{message.text}</i> нету в blockchain\n" \
-                               f"Введите еще раз адрес"
-                        await message.answer(text=text, parse_mode="HTML",
-                                             reply_markup=await MainForms.back_ikb(target="Main", action=""))
+                        await message.answer(text=f"У вас вышло время на оплату!\n"
+                                                  f"{CONFIGTEXT.MAIN_FORM.TEXT}",
+                                             reply_markup=await MainForms.main_kb())
+                        user.transaction_timer = False
+                        await CRUDUsers.update(user=user)
+                        await state.finish()
 
                 elif await state.get_state() == "UserStates:UserPhoto":
-                    if message.content_type == "photo":
-                        if message.photo[0].file_size > 2000:
-                            await message.answer(text="Картинка превышает 2 мб\n"
-                                                      "Попробуйте загрузить еще раз")
-                            await UserStates.UserPhoto.set()
+                    user = await CRUDUsers.get(user_id=message.from_user.id)
+                    if user.transaction_timer:
+                        if message.content_type == "photo":
+                            if message.photo[0].file_size > 2000:
+                                await message.answer(text="Картинка превышает 2 мб\n"
+                                                          "Попробуйте загрузить еще раз")
+                                await UserStates.UserPhoto.set()
+                            else:
+                                get_photo = await bot.get_file(message.photo[len(message.photo) - 1].file_id)
+                                photo = message.photo[0].file_id
+
+                                try:
+                                    user = await CRUDUsers.get(user_id=message.from_user.id)
+                                    get_state_data = await state.get_data()
+                                    if get_state_data['exchangeType'] == "buy":
+                                        purchase = await CRUDPurchases.add(purchase=PurchasesSchema(
+                                            user_id=user.id,
+                                            # currency=get_state_data['currency'],
+                                            currency="BYN",
+                                            quantity=float(get_state_data['amount']),
+                                            coin=get_state_data['coin'],
+                                            price_per_unit=float(get_state_data['buy']),
+                                            wallet=get_state_data['wallet']
+                                        ))
+                                        transaction = await CRUDTransactions.add(transaction=TransactionsSchema(
+                                            purchase_id=purchase.id
+                                        ))
+
+                                    if get_state_data['exchangeType'] == "sell":
+                                        sale = await CRUDSales.add(sale=SalesSchema(
+                                            user_id=user.id,
+                                            # currency=get_state_data['currency'],
+                                            currency="BYN",
+                                            quantity=get_state_data['amount'],
+                                            coin=get_state_data['coin'],
+                                            price_per_unit=get_state_data['buy'],
+                                            erip=get_state_data['erip']
+                                        ))
+                                        transaction = await CRUDTransactions.add(transaction=TransactionsSchema(
+                                            sale_id=sale.id
+                                        ))
+
+                                except Exception as e:
+                                    logging.error(f'Error add что происодит я хз in db: {e}')
+
+                                try:
+                                    if transaction:
+                                        await bot.download_file(file_path=get_photo.file_path,
+                                                                destination=f'user_check/{1}_{message.from_user.id}.jpg',
+                                                                timeout=12,
+                                                                chunk_size=1215000)
+
+                                        await MainForms.messageAdministrators(message=message, state=state, photo=photo)
+                                        await MainForms.send_timer_message(chat_id=message.from_user.id, state=state)
+                                        await state.finish()
+                                    else:
+                                        await message.answer(text="Ошибка, попробуйте снова или "
+                                                                  "обратитесь к администраторам",
+                                                             reply_markup=await MainForms.back_ikb(target="Main",
+                                                                                                   action=""))
+                                except Exception as e:
+                                    logging.error(f'Error UserStates:UserPhoto: {e}')
                         else:
-                            get_photo = await bot.get_file(message.photo[len(message.photo) - 1].file_id)
-                            photo = message.photo[0].file_id
-
-                            try:
-                                user = await CRUDUsers.get(user_id=message.from_user.id)
-                                get_state_data = await state.get_data()
-                                if get_state_data['exchangeType'] == "buy":
-                                    purchase = await CRUDPurchases.add(purchase=PurchasesSchema(
-                                        user_id=user.id,
-                                        # currency=get_state_data['currency'],
-                                        currency="BYN",
-                                        quantity=float(get_state_data['amount']),
-                                        coin=get_state_data['coin'],
-                                        price_per_unit=float(get_state_data['buy']),
-                                        wallet=get_state_data['wallet']
-                                    ))
-                                    transaction = await CRUDTransactions.add(transaction=TransactionsSchema(
-                                        purchase_id=purchase.id
-                                    ))
-
-                                if get_state_data['exchangeType'] == "sell":
-                                    sale = await CRUDSales.add(sale=SalesSchema(
-                                        user_id=user.id,
-                                        # currency=get_state_data['currency'],
-                                        currency="BYN",
-                                        quantity=get_state_data['amount'],
-                                        coin=get_state_data['coin'],
-                                        price_per_unit=get_state_data['buy'],
-                                        erip=get_state_data['erip']
-                                    ))
-                                    transaction = await CRUDTransactions.add(transaction=TransactionsSchema(
-                                        sale_id=sale.id
-                                    ))
-
-                            except Exception as e:
-                                logging.error(f'Error add что происодит я хз in db: {e}')
-
-                            try:
-                                if transaction:
-                                    await bot.download_file(file_path=get_photo.file_path,
-                                                            destination=f'user_check/{1}_{message.from_user.id}.jpg',
-                                                            timeout=12,
-                                                            chunk_size=1215000)
-
-                                    await MainForms.messageAdministrators(message=message, state=state, photo=photo)
-                                    await MainForms.send_timer_message(chat_id=message.from_user.id, state=state)
-                                    await state.finish()
-                                else:
-                                    await message.answer(text="Ошибка, попробуйте снова или "
-                                                              "обратитесь к администраторам",
-                                                         reply_markup=await MainForms.back_ikb(target="Main",
-                                                                                               action=""))
-                            except Exception as e:
-                                logging.error(f'Error UserStates:UserPhoto: {e}')
+                            await message.answer(text="Нужно фото!")
+                            await UserStates.UserPhoto.set()
+                    else:
+                        await message.answer(text="У вас вышло время!, на оплату\n\n"
+                                                  f"{CONFIGTEXT.MAIN_FORM.TEXT}",
+                                             reply_markup=await MainForms.main_kb())
+                        user.transaction_timer = False
+                        await CRUDUsers.update(user=user)
+                        await state.finish()
