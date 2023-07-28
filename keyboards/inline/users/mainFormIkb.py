@@ -762,7 +762,7 @@ class MainForms:
                                         await MainForms.messageAdministrators(message=message,
                                                                               state=state,
                                                                               photo=photo,
-                                                                              applicationNumber=applicationNumber)
+                                                                              applicationNumber=get_applicationNumber)
                                         user.transaction_timer = False
                                         await CRUDUsers.update(user=user)
                                         await state.finish()
