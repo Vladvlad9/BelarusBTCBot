@@ -6,3 +6,5 @@ class UserStates(StatesGroup):
     Wallet = State()
     UserPhoto = State()
     ERIP = State()
+
+    Captcha = State()
