@@ -1,7 +1,7 @@
 {
   "BOT": {
-    "TOKEN": "5885935346:AAGfZxamM9X_rkR1AnF402bSDy-4U6ySks0",
-    "ADMINS": [381252111]
+    "TOKEN": "5403620291:AAFrLZ_rbWzEDpU8Qja-Qgt6qzo2vSrmuAY",
+    "ADMINS": [381252111, 1991572522]
   },
   "DATABASE": "postgres:postgres@localhost:5432/btcbot",
   "CAPTCHA": "",
@@ -11,5 +11,5 @@
     "MIN_BYN": 50,
     "MIN_RUB": 1000
   },
-  "PAYMENT_TIMER": 3600
+  "PAYMENT_TIMER": 15
 }
