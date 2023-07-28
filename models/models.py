@@ -15,6 +15,7 @@ class Users(Base):
     date_created = Column(TIMESTAMP, default=datetime.now())  # Дата создания акк.
     transaction_timer = Column(Boolean, default=False)
     captcha = Column(Text, default=False)
+    check_captcha = Column(Boolean, default=False)
 
 
 class Purchases(Base):
