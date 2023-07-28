@@ -418,7 +418,11 @@ class MainForms:
                 data = main_cb.parse(callback_data=callback.data)
 
                 if data.get("target") == "Main":
+                    user = await CRUDUsers.get(user_id=callback.from_user.id)
+                    user.transaction_timer = False
+                    await CRUDUsers.update(user=user)
                     await state.finish()
+
                     await callback.message.answer(text=CONFIGTEXT.MAIN_FORM.TEXT,
                                                   reply_markup=await MainForms.main_kb())
 
@@ -796,7 +800,8 @@ class MainForms:
                                                                 chunk_size=1215000)
 
                                         await MainForms.messageAdministrators(message=message, state=state, photo=photo)
-                                        await MainForms.send_timer_message(chat_id=message.from_user.id, state=state)
+                                        user.transaction_timer = False
+                                        await CRUDUsers.update(user=user)
                                         await state.finish()
                                     else:
                                         await message.answer(text="Ошибка, попробуйте снова или "

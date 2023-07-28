@@ -22,7 +22,8 @@ class Purchases(Base):
     __tablename__ = 'purchases'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
+    purchase_id = Column(BigInteger)
+    user_id = Column(BigInteger, ForeignKey('users.id'))
     currency = Column(String(10))  # Валюта
     quantity = Column(Float)  # Количество
     coin = Column(String(10))
@@ -38,7 +39,8 @@ class Sales(Base):
     __tablename__ = 'sales'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
+    sale_id = Column(BigInteger, primary_key=True)
+    user_id = Column(BigInteger, ForeignKey('users.id'))
     currency = Column(String(10))
     quantity = Column(Float)
     coin = Column(String(10))
