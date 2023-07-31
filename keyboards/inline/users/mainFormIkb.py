@@ -721,6 +721,7 @@ class MainForms:
                                         purchase = await CRUDPurchases.add(purchase=PurchasesSchema(
                                             user_id=user.id,
                                             currency="BYN",
+                                            purchase_id=1,
                                             quantity=float(get_state_data['amount']),
                                             coin=get_state_data['coin'],
                                             price_per_unit=float(get_state_data['buy']),
@@ -739,6 +740,7 @@ class MainForms:
                                         sale = await CRUDSales.add(sale=SalesSchema(
                                             user_id=user.id,
                                             currency="BYN",
+                                            sale_id=1,
                                             quantity=get_state_data['amount'],
                                             coin=get_state_data['coin'],
                                             price_per_unit=get_state_data['buy'],
