@@ -3,7 +3,8 @@ from pydantic import BaseModel, Field, validator
 
 
 class SalesSchema(BaseModel):
-    user_id: int = Field(ge=1)
+    user_id: int = Field(default=None)
+    sale_id: int = Field(ge=1)
     currency: str
     quantity: float
     coin: str

@@ -53,12 +53,18 @@ class CRUDSales(object):
 
     @staticmethod
     @create_async_session
-    async def get_all(session: AsyncSession = None) -> list[SalesInDBSchema]:
+    async def get_all(user_id: int = None,session: AsyncSession = None) -> list[SalesInDBSchema]:
         try:
-            sales = await session.execute(
-                select(Sales)
-                .order_by(Sales.id)
-            )
+            if user_id:
+                sales = await session.execute(
+                    select(Sales)
+                    .where(Sales.user_id == user_id)
+                )
+            else:
+                sales = await session.execute(
+                    select(Sales)
+                    .where(Sales.id)
+                )
             return [SalesInDBSchema(**sale[0].__dict__) for sale in sales]
         except ValidationError as e:
             print(e)

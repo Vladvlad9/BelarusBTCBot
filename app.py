@@ -1,9 +1,3 @@
-import asyncio
-from datetime import datetime
-
-from aiogram.utils.exceptions import ChatNotFound
-
-from loader import bot
 from utils.set_bot_commands import set_default_commands
 
 

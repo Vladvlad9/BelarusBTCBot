@@ -17,7 +17,7 @@ depends_on = None
 
 
 # нужно не забыть сделать на новом сервере
-# Select pg_get_serial_sequence('purchases', 'purchase_id');
+# Select pg_get_serial_sequence('sales', 'sale_id');
 # SELECT setval('public.sales_sale_id_seq', 549112, false);
 
 # Select pg_get_serial_sequence('purchases', 'purchase_id');
@@ -38,7 +38,7 @@ def upgrade() -> None:
 
     op.create_table('purchases',
                     sa.Column('id', sa.BigInteger()),
-                    sa.Column('purchase_id', sa.BigInteger()),
+                    sa.Column('purchase_id', sa.Integer(), autoincrement=True, start=549112),
                     sa.Column('user_id', sa.BigInteger()),
                     sa.Column('currency', sa.String(10)),
                     sa.Column('coin', sa.String(10)),
@@ -54,7 +54,7 @@ def upgrade() -> None:
 
     op.create_table('sales',
                     sa.Column('id', sa.BigInteger()),
-                    sa.Column('sale_id', sa.BigInteger()),
+                    sa.Column('sale_id', sa.Integer(), autoincrement=True, start_with=449112),
                     sa.Column('user_id', sa.BigInteger()),
                     sa.Column('currency', sa.String(10)),
                     sa.Column('coin', sa.String(10)),

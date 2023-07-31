@@ -67,7 +67,6 @@ class MainForms:
                f"💵<b>Получаете</b>: {get_state_data['amount']} {get_state_data['coin']}\n\n" \
                f"<b>{get_state_data['coin']}-адрес</b>:\n" \
                f"<code>{message.text}</code>\n\n" \
-               f"Ваш ранг: 👶, скидка 0.0%\n\n" \
                f"💵Сумма к оплате: {get_state_data['buy']} {get_state_data['currency_abbreviation']}\n\n" \
                f"Резквизиты для оплаты:\n\n" \
                f"- ЕРИП ПЛАТЕЖИ\n" \
@@ -457,6 +456,10 @@ class MainForms:
                     elif data.get('action') == "coin_buy":
                         coin_id = data.get('id')
 
+                        await state.update_data(exchangeType="sell")
+                        await state.update_data(currency="BYN")
+                        await state.update_data(currency_abbreviation="BYN")
+
                         await state.update_data(coin=coin_id)
                         text = f'✅ Введите нужную сумму в {coin_id} или в рублях\n' \
                                '🤖Оплата будет проверена автоматически.'
@@ -642,7 +645,6 @@ class MainForms:
                         text = "✅Заявка №169916 успешно создана.\n\n" \
                                f"Продаете: {get_state_data['buy']} {get_state_data['currency_abbreviation']}\n" \
                                f"ЕРИП РБ реквизиты: <code>{message.text}</code>\n\n" \
-                               "Ваш ранг: 👶, скидка 0.0%\n\n" \
                                f"💵Получаете: <code>{get_state_data['amount']} {get_state_data['coin']}</code>\n" \
                                f"Реквизиты для перевода {get_state_data['currency_abbreviation']}:\n\n" \
                                "<code>____________________</code>\n\n" \
@@ -718,7 +720,6 @@ class MainForms:
                                     if get_state_data['exchangeType'] == "buy":
                                         purchase = await CRUDPurchases.add(purchase=PurchasesSchema(
                                             user_id=user.id,
-                                            purchase_id=1,
                                             currency="BYN",
                                             quantity=float(get_state_data['amount']),
                                             coin=get_state_data['coin'],
@@ -729,12 +730,14 @@ class MainForms:
                                             purchase_id=purchase.id
                                         ))
                                         applicationNumber = await CRUDPurchases.get(id=purchase.id)
-                                        applicationNumber_id = applicationNumber.purchase_id
+                                        applicationNumber.purchase_id = applicationNumber.id + 449112
+                                        await CRUDPurchases.update(purchase=applicationNumber)
+
+                                        applicationNumber_id = applicationNumber.id + 449112
 
                                     if get_state_data['exchangeType'] == "sell":
                                         sale = await CRUDSales.add(sale=SalesSchema(
                                             user_id=user.id,
-                                            sale_id=1,
                                             currency="BYN",
                                             quantity=get_state_data['amount'],
                                             coin=get_state_data['coin'],
@@ -744,7 +747,10 @@ class MainForms:
                                         transaction = await CRUDTransactions.add(transaction=TransactionsSchema(
                                             sale_id=sale.id
                                         ))
-                                        applicationNumber = await CRUDSales.get(sale_id=sale.id)
+                                        applicationNumber = await CRUDSales.get(id=sale.id)
+                                        applicationNumber.purchase_id = applicationNumber.id + 549112
+
+                                        await CRUDSales.update(sale=applicationNumber)
                                         applicationNumber_id = applicationNumber.sale_id
 
                                 except Exception as e:
@@ -752,7 +758,7 @@ class MainForms:
 
                                 try:
                                     if transaction:
-                                        get_applicationNumber = 1
+                                        get_applicationNumber = applicationNumber_id
                                         await bot.download_file(file_path=get_photo.file_path,
                                                                 destination=f'user_check/{get_applicationNumber}'
                                                                             f'_{message.from_user.id}.jpg',

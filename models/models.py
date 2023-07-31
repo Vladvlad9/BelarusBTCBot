@@ -39,7 +39,7 @@ class Sales(Base):
     __tablename__ = 'sales'
 
     id = Column(Integer, primary_key=True)
-    sale_id = Column(BigInteger, primary_key=True)
+    sale_id = Column(BigInteger)
     user_id = Column(BigInteger, ForeignKey('users.id'))
     currency = Column(String(10))
     quantity = Column(Float)

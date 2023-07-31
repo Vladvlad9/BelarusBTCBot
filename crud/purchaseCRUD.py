@@ -38,22 +38,37 @@ class CRUDPurchases(object):
     @staticmethod
     @create_async_session
     async def get(id: int = None,
+                  user_id: int = None,
                   session: AsyncSession = None) -> PurchasesInDBSchema | None:
-        purchases = await session.execute(
-            select(Purchases)
-            .where(Purchases.id == id)
-        )
+        if user_id:
+            purchases = await session.execute(
+                select(Purchases)
+                .where(Purchases.user_id == user_id)
+            )
+        else:
+            purchases = await session.execute(
+                select(Purchases)
+                .where(Purchases.id == id)
+            )
         if purchase := purchases.first():
             return PurchasesInDBSchema(**purchase[0].__dict__)
 
     @staticmethod
     @create_async_session
-    async def get_all(session: AsyncSession = None) -> list[PurchasesInDBSchema]:
+    async def get_all(
+            user_id: int = None,
+            session: AsyncSession = None) -> list[PurchasesInDBSchema]:
         try:
-            purchases = await session.execute(
-                select(Purchases)
-                .order_by(Purchases.id)
-            )
+            if user_id:
+                purchases = await session.execute(
+                    select(Purchases)
+                    .where(Purchases.user_id == user_id)
+                )
+            else:
+                purchases = await session.execute(
+                    select(Purchases)
+                    .where(Purchases.id)
+                )
             return [PurchasesInDBSchema(**purchase[0].__dict__) for purchase in purchases]
         except ValidationError as e:
             print(e)
