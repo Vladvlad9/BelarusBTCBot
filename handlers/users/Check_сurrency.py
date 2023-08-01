@@ -1,5 +1,6 @@
 import re
 
+from config import CONFIG
 from handlers.users.Cryptocurrency import Cryptocurrency
 from states.users.userStates import UserStates
 
@@ -40,26 +41,48 @@ class Check_currency():
                 price_BTC: float = await Cryptocurrency.get_btc()
                 get_buy: float = round(price_BTC * byn, 3)
 
-                get_BYN_Btc: float = round(float(self.amount) / float(get_buy), 2)
-                await state.update_data(amount=float(get_BYN_Btc))
-                await state.update_data(buy=self.amount)
+                if self.coin == "Bitcoin":
+                    getUSD = round(float(self.amount) / byn, 3)
+                    get_BYN_Btc = round(getUSD / (price_BTC * 1.05), 6)
 
-                text = f"Сумма к получению: {round(get_BYN_Btc, 2)} {self.coin}\n" \
-                       f"Сумма к оплате: {self.amount} {self.currency[0]}\n\n" \
-                       f"📝Введите {self.coin}-адрес кошелька," \
-                       f"куда вы хотите отправить " \
-                       f"{round(get_BYN_Btc, 2)} {self.coin}"
+                    text = f"Сумма к получению: {get_BYN_Btc} {self.coin}\n" \
+                           f"Сумма к оплате: {self.amount} {self.currency[0]}"
+
+                    text_two = f"📝Введите {self.coin}-адрес кошелька," \
+                               f"куда вы хотите отправить " \
+                               f"{get_BYN_Btc} {self.coin}"
+
+                    await state.update_data(amount=float(get_BYN_Btc))
+                    await state.update_data(buy=self.amount)
+
+                else:
+                    get_BYN_Btc = round(float(self.amount) * (byn * 1.05), 3)
+
+                    text = f"Сумма к получению: {self.amount} {self.coin}\n" \
+                           f"Сумма к оплате: {get_BYN_Btc} {self.currency[0]}"
+
+                    text_two = f"📝Введите {self.coin}-адрес кошелька," \
+                               f"куда вы хотите отправить " \
+                               f"{self.amount} {self.coin}"
+                #get_BYN_Btc: float = round(float(self.amount) / float(get_buy), 7)
+
+                    await state.update_data(amount=self.amount)
+                    await state.update_data(buy=float(get_BYN_Btc))
+
+                # text_two = f"📝Введите {self.coin}-адрес кошелька," \
+                #            f"куда вы хотите отправить " \
+                #            f"{get_BYN_Btc} {self.coin}"
 
                 await UserStates.Wallet.set()
-                return text
+                return [text, text_two]
             else:
                 text = f"Сумма к получению: {self.amount} {self.abbreviation}\n" \
-                       f"Сумма к оплате: {round(self.buy, 2)} {self.currency[0]}\n\n" \
-                       f"📝Введите {self.coin}-адрес кошелька," \
-                       f"куда вы хотите отправить " \
-                       f"{self.amount} {self.abbreviation}"
+                       f"Сумма к оплате: {self.buy} {self.currency[0]}\n\n"
+                text_two = f"📝Введите {self.coin}-адрес кошелька," \
+                           f"куда вы хотите отправить " \
+                           f"{self.amount} {self.abbreviation}"
                 await UserStates.Wallet.set()
-            return text
+            return [text, text_two]
 
     @staticmethod
     async def commaToDot(amount):
