@@ -21,7 +21,7 @@ class Check_currency():
                 price_BTC: float = await Cryptocurrency.get_btc()
                 get_buy: float = round(price_BTC * byn, 3)
 
-                get_BYN_Btc: float = round(float(self.amount) / float(get_buy),2)
+                get_BYN_Btc: float = round(float(self.amount) / float(get_buy), 2)
                 await state.update_data(amount=float(get_BYN_Btc))
                 await state.update_data(buy=self.amount)
 
@@ -29,10 +29,10 @@ class Check_currency():
                        f"{round(get_BYN_Btc, 2)} {self.coin}"
                 await UserStates.ERIP.set()
                 return text
-                pass
             else:
                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
                        f"{self.buy} {self.currency[0]}"
+                pass
                 await UserStates.ERIP.set()
                 return text
         else:
