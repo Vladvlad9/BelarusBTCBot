@@ -4,6 +4,7 @@ from aiogram.utils.exceptions import BadRequest
 
 from config import CONFIG
 from config.config import CONFIGTEXT
+from crud import CRUDUsers
 from crud.purchaseCRUD import CRUDPurchases
 from crud.saleCRUD import CRUDSales
 # from crud import CRUDUsers, CRUDTransaction, CRUDCurrency, CRUDOperation
@@ -76,6 +77,19 @@ class AdminForm:
                                                                                name_items["id"],
                                                                                name_items["editid"]))
                 ] for name, name_items in data.items()
+            ]
+        )
+
+    @staticmethod
+    async def report_ikb() -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="Продажи", callback_data=admin_cb.new("Report", "ReportSale", 0, 0))
+                ],
+                [
+                    InlineKeyboardButton(text="Покупки", callback_data=admin_cb.new("Report", "ReportBuy", 0, 0))
+                ]
             ]
         )
 
@@ -311,49 +325,98 @@ class AdminForm:
                                                          )
                         await AdminState.NewsletterText.set()
 
+                elif data.get('target') == "Report":
+                    if data.get('action') == "get_Report":
+                        await callback.message.edit_text(text="Выберите",
+                                                         reply_markup=await AdminForm.report_ikb())
 
+                    elif data.get('action') == "ReportSale":
+                        sales = await CRUDSales.get_all()
+                        user_id = []
+                        sale_id = []
+                        currency = []
+                        coin = []
+                        erip = []
+                        quantity = []
+                        price_per_unit = []
+                        date = []
+                        status = []
 
-                # elif data.get('target') == "Report":
-                #     if data.get('action') == "get_Report":
-                #         transactions = await CRUDTransaction.get_all()
-                #         user_id = []
-                #         exchange_rate = []
-                #         buy_BTC = []
-                #         sale = []
-                #         wallet = []
-                #         date_created = []
-                #         currency_id = []
-                #         operation_id = []
-                #         for transaction in transactions:
-                #             user = await CRUDUsers.get(id=transaction.user_id)
-                #             currency = await CRUDCurrency.get(currency_id=int(transaction.currency_id))
-                #             operation = await CRUDOperation.get(operation_id=int(transaction.operation_id))
-                #             user_id.append(user.user_id)
-                #             exchange_rate.append(transaction.exchange_rate)
-                #             sale.append(transaction.sale)
-                #
-                #             currency_id.append(currency.name)
-                #             wallet.append(transaction.wallet)
-                #             date_created.append(transaction.date_created)
-                #             buy_BTC.append(transaction.buy_BTC)
-                #             operation_id.append(operation.name)
-                #
-                #         df = pd.DataFrame({
-                #             'user_id': user_id,
-                #             'Курс обмена': exchange_rate,
-                #             'Куплено BTC': buy_BTC,
-                #             'Продано': sale,
-                #             'Валюта': currency_id,
-                #             'кошелек': wallet,
-                #             'Дата сделки': date_created,
-                #             'Операция': operation_id
-                #         })
-                #         df.to_excel('Отчет.xlsx')
-                #
-                #         await callback.message.answer_document(document=open('Отчет.xlsx', 'rb'),
-                #                                                caption="Отчет сформирован",
-                #                                                parse_mode="HTML"
-                #                                                )
+                        for sale in sales:
+                            user = await CRUDUsers.get(id=sale.user_id)
+
+                            user_id.append(user.user_id)
+                            sale_id.append(sale.sale_id)
+                            price_per_unit.append(sale.price_per_unit)
+                            currency.append(sale.currency)
+
+                            quantity.append(sale.quantity)
+                            coin.append(sale.coin)
+                            erip.append(sale.erip)
+                            date.append(sale.date)
+                            status.append(sale.status)
+
+                        df = pd.DataFrame({
+                            'user_id': user_id,
+                            'id Продажи': sale_id,
+                            'Получено': price_per_unit,
+                            'Валюта': currency,
+                            'Продано': quantity,
+                            'Монета': coin,
+                            'ЕРИП': erip,
+                            'Дата сделки': date,
+                            'Статус': status
+                        })
+                        df.to_excel('Sale.xlsx')
+
+                        await callback.message.answer_document(document=open('Sale.xlsx', 'rb'),
+                                                               caption="Отчет сформирован",
+                                                               parse_mode="HTML"
+                                                               )
+
+                    elif data.get('action') == "ReportBuy":
+                        sales = await CRUDPurchases.get_all()
+                        user_id = []
+                        purchase_id = []
+                        currency = []
+                        coin = []
+                        wallet = []
+                        quantity = []
+                        price_per_unit = []
+                        date = []
+                        status = []
+
+                        for sale in sales:
+                            user = await CRUDUsers.get(id=sale.user_id)
+
+                            user_id.append(user.user_id)
+                            purchase_id.append(sale.purchase_id)
+                            price_per_unit.append(sale.price_per_unit)
+                            currency.append(sale.currency)
+
+                            quantity.append(sale.quantity)
+                            coin.append(sale.coin)
+                            wallet.append(sale.wallet)
+                            date.append(sale.date)
+                            status.append(sale.status)
+
+                        df = pd.DataFrame({
+                            'id Пользователя': user_id,
+                            'id Покупки': purchase_id,
+                            'Получено': price_per_unit,
+                            'Валюта': currency,
+                            'Продано': quantity,
+                            'Монета': coin,
+                            'Кошелек': wallet,
+                            'Дата сделки': date,
+                            'Статус': status
+                        })
+                        df.to_excel('Buy.xlsx')
+
+                        await callback.message.answer_document(document=open('Buy.xlsx', 'rb'),
+                                                               caption="Отчет сформирован",
+                                                               parse_mode="HTML"
+                                                               )
 
                 elif data.get('target') == "Text_change":
                     if data.get('action') == "get_Сhange":
