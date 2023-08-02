@@ -741,7 +741,12 @@ class MainForms:
                 elif await state.get_state() == "UserStates:Wallet":
                     user = await CRUDUsers.get(user_id=message.from_user.id)
                     if user.transaction_timer:
-                        wallet = await Cryptocurrency.Check_Wallet(btc_address=message.text)
+                        data_state = await state.get_data()
+                        if data_state['coin'] == "USDT":
+                            wallet = await Cryptocurrency.Check_Wallet_USDT(address=message.text)
+                        else:
+                            wallet = await Cryptocurrency.Check_Wallet(btc_address=message.text)
+
                         get_state_data = await state.get_data()
                         if wallet:
                             await state.update_data(wallet=message.text)

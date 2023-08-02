@@ -8,6 +8,7 @@ from aiogram.utils.exceptions import BadRequest
 from config import CONFIG
 from config.config import CONFIGTEXT
 from crud import CRUDUsers
+from handlers.users.Cryptocurrency import Cryptocurrency
 from keyboards.inline.users.mainFormIkb import main_cb, MainForms
 from loader import dp, bot
 from schemas import UserSchema
