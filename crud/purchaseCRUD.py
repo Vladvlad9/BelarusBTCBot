@@ -67,7 +67,6 @@ class CRUDPurchases(object):
             else:
                 purchases = await session.execute(
                     select(Purchases)
-                    .where(Purchases.id)
                 )
             return [PurchasesInDBSchema(**purchase[0].__dict__) for purchase in purchases]
         except ValidationError as e:

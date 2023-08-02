@@ -4,6 +4,8 @@ from aiogram.utils.exceptions import BadRequest
 
 from config import CONFIG
 from config.config import CONFIGTEXT
+from crud.purchaseCRUD import CRUDPurchases
+from crud.saleCRUD import CRUDSales
 # from crud import CRUDUsers, CRUDTransaction, CRUDCurrency, CRUDOperation
 from handlers.AllCallbacks import admin_cb
 from loader import bot
@@ -62,6 +64,8 @@ class AdminForm:
                 "📨 Рассылка": {"target": "Newsletter", "action": "get_Newsletter", "id": 0, "editid": 0},
                 "📝 Изменение текста": {"target": "Text_change", "action": "get_Сhange", "id": 0, "editid": 0},
                 "👨‍💻 Пользователи": {"target": "Users", "action": "get_Users", "id": 0, "editid": 0},
+                "Продажа": {"target": "Sale", "action": "get_Sale", "id": 0, "editid": 0},
+                "Покупка": {"target": "Buy", "action": "get_Buy", "id": 0, "editid": 0},
                 "📊 Отчет": {"target": "Report", "action": "get_Report", "id": 0, "editid": 0},
                 }
         return InlineKeyboardMarkup(
@@ -141,6 +145,8 @@ class AdminForm:
                 ] for name, name_items in data.items()
             ]
         )
+
+
 
     @staticmethod
     async def process_admin_profile(callback: CallbackQuery = None, message: Message = None,
@@ -304,6 +310,8 @@ class AdminForm:
                                                              action="get_Newsletter")
                                                          )
                         await AdminState.NewsletterText.set()
+
+
 
                 # elif data.get('target') == "Report":
                 #     if data.get('action') == "get_Report":

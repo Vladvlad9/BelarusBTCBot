@@ -46,14 +46,14 @@ class CRUDSales(object):
             )
         else:
             sales = await session.execute(
-                select(Sales).where(Sales.id == id).order_by(Sales.id)
+                select(Sales).where(Sales.id == id)
             )
         if sale := sales.first():
             return SalesInDBSchema(**sale[0].__dict__)
 
     @staticmethod
     @create_async_session
-    async def get_all(user_id: int = None,session: AsyncSession = None) -> list[SalesInDBSchema]:
+    async def get_all(user_id: int = None, session: AsyncSession = None) -> list[SalesInDBSchema]:
         try:
             if user_id:
                 sales = await session.execute(
@@ -63,7 +63,6 @@ class CRUDSales(object):
             else:
                 sales = await session.execute(
                     select(Sales)
-                    .where(Sales.id)
                 )
             return [SalesInDBSchema(**sale[0].__dict__) for sale in sales]
         except ValidationError as e:

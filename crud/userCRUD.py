@@ -73,8 +73,7 @@ class CRUDUsers(object):
                 )
             else:
                 users = await session.execute(
-                    select(Users)
-                        .order_by(Users.id)
+                    select(Users).order_by(Users.id)
                 )
             return [UserInDBSchema(**user[0].__dict__) for user in users]
         except ValidationError as e:
