@@ -623,124 +623,6 @@ class Users:
                                                                                                action="get_Users")
                                                              )
 
-                    # # Пагинация
-                    # elif data.get("action") == "pagination_user_transaction":
-                    #     page = int(data.get('id'))
-                    #     get_user_id = int(data.get('editId'))
-                    #
-                    #     user = await CRUDUsers.get(id=get_user_id)
-                    #     transaction = await CRUDTransaction.get_all(user_id=user.id)
-                    #     currency = await CRUDCurrency.get(currency_id=transaction[page].currency_id)
-                    #
-                    #     if transaction:
-                    #
-                    #         approved = "✅ одобрена ✅" if transaction[page].approved else "❌ не одобрена ❌"
-                    #
-                    #         text = f"🤝 Сделка № {transaction[page].id} {approved}\n\n" \
-                    #                f"📈 Курс покупки: <i>{transaction[page].exchange_rate}\n</i>" \
-                    #                f"   ₿  Куплено BTC: <i>{transaction[page].buy_BTC}\n</i>" \
-                    #                f"💸 Продано {currency.name}: <i>{transaction[page].sale}\n</i>" \
-                    #                f"👛 Кошелек <i>{transaction[page].wallet}</i>"
-                    #         try:
-                    #             await callback.message.edit_text(text=f"<i>Сделки пользователя</i>\n\n"
-                    #                                                   f"{text}",
-                    #                                              reply_markup=await Users.pagination_transaction_ikb(
-                    #                                                  user_id=user.id,
-                    #                                                  page=page,
-                    #                                                  target="UsersId",
-                    #                                                  action="pagination_user_transaction"),
-                    #                                              parse_mode="HTML"
-                    #                                              )
-                    #         except BadRequest:
-                    #             await callback.message.delete()
-                    #             await callback.message.answer(text=f"<i>Сделки Пользователя</i>\n\n"
-                    #                                                f"{text}",
-                    #                                           reply_markup=await Users.pagination_transaction_ikb(
-                    #                                               user_id=user.id,
-                    #                                               page=page,
-                    #                                               target="UsersId",
-                    #                                               action="pagination_user_transaction"),
-                    #                                           parse_mode="HTML"
-                    #                                           )
-                    #     else:
-                    #         await callback.message.edit_text(text="Пользователь не совершал сделок 😞",
-                    #                                          reply_markup=await Users.back_ikb(
-                    #                                              target="UsersId",
-                    #                                              action="get_Users")
-                    #                                          )
-                    #
-                    # # Бургер меню
-                    # elif data.get("action") == "get_check_transaction":
-                    #     page = int(data.get('id'))
-                    #     get_user_id = int(data.get('editId'))
-                    #
-                    #     user = await CRUDUsers.get(id=get_user_id)
-                    #     transaction = await CRUDTransaction.get_all(user_id=user.id)
-                    #
-                    #     if transaction:
-                    #         approved = "✅ одобрена ✅" if transaction[page].approved else "❌ не одобрена ❌"
-                    #         currency = await CRUDCurrency.get(currency_id=transaction[page].currency_id)
-                    #
-                    #         text = f"🤝 Сделка № {transaction[page].id} {approved}\n\n" \
-                    #                f"📈 Курс покупки: <i>{transaction[page].exchange_rate}\n</i>" \
-                    #                f"   ₿  Куплено BTC: <i>{transaction[page].buy_BTC}\n</i>" \
-                    #                f"💸 Продано {currency.name}: <i>{transaction[page].sale}\n</i>" \
-                    #                f"👛 Кошелек <i>{transaction[page].wallet}</i>"
-                    #
-                    #         await state.update_data(id=get_user_id)
-                    #         await state.update_data(page=page)
-                    #         await state.update_data(check_number=False)
-                    #
-                    #         if transaction[page].check != "None":
-                    #             try:
-                    #                 await callback.message.delete()
-                    #                 photo = open(f'user_check/{transaction[page].check}.jpg', 'rb')
-                    #                 await bot.send_photo(chat_id=callback.from_user.id, photo=photo,
-                    #                                      caption=f"<i>Сделка пользователя</i>\n\n"
-                    #                                              f"{text}",
-                    #                                      reply_markup=await Users.check_confirmation_ikb(
-                    #                                          page=page,
-                    #                                          user_id=user.id,
-                    #                                          target="UsersId",
-                    #                                          action_back="pagination_user_transaction",
-                    #                                          action_confirm="Confirmation_Transaction")
-                    #                                      )
-                    #             except FileNotFoundError:
-                    #                 pass
-                    #         else:
-                    #             await callback.message.edit_text(text=f"<i>Сделка пользователя</i>\n\n"
-                    #                                                   f"Пользователь не добавил чек\n\n"
-                    #                                                   f"{text}",
-                    #                                              reply_markup=await Users.check_confirmation_ikb(
-                    #                                                  page=page,
-                    #                                                  user_id=user.id,
-                    #                                                  target="UsersId",
-                    #                                                  action_back="pagination_user_transaction",
-                    #                                                  action_confirm="Confirmation_Transaction")
-                    #                                              )
-                    #     else:
-                    #         await callback.message.edit_text(text="Не найдено",
-                    #                                          reply_markup=await Users.back_ikb(target="Users",
-                    #                                                                            action="get_Users")
-                    #                                          )
-                    #
-                    # # Потверждение оплаты
-                    # elif data.get("action") == "Confirmation_Transaction":
-                    #     captcha = await Users.captch()
-                    #     try:
-                    #         await callback.message.edit_text(text="Вы уверены, что готовы перевести средства?\n\n"
-                    #                                               f"Введите результат {captcha[0]} + {captcha[1]}")
-                    #         await state.update_data(captcha=captcha[2])
-                    #
-                    #         await AdminState.CAPTCHA.set()
-                    #     except Exception as e:
-                    #         print(e)
-                    #         await callback.message.delete()
-                    #         await callback.message.answer(text="Вы уверены, что готовы перевести средства?\n\n"
-                    #                                            f"Введите результат {captcha[0]} + {captcha[1]}")
-                    #         await state.update_data(captcha=captcha[2])
-                    #         await AdminState.CAPTCHA.set()
-
                 elif data.get('target') == "Sale":
                     if data.get('action') == "SaleTrue":
                         salesTrue = list(filter(lambda x: x.status, await CRUDSales.get_all()))
@@ -789,7 +671,9 @@ class Users:
                                                               page=page)
                                                           )
                         else:
-                            await callback.message.edit_text(text="Не найдено!")
+                            await callback.message.edit_text(text="Не найдено!",
+                                                             reply_markup=await Users.back_ikb(target="Sale",
+                                                                                               action="get_Sale"))
 
                     elif data.get('action') == "SaleFalse":
                         salesFalse = list(filter(lambda x: x.status == False, await CRUDSales.get_all()))
@@ -811,7 +695,9 @@ class Users:
                                                                  action="SaleFalsePagination"
                                                              ))
                         else:
-                            await callback.message.edit_text(text="Не найдено!")
+                            await callback.message.edit_text(text="Не найдено!",
+                                                             reply_markup=await Users.back_ikb(target="Sale",
+                                                                                               action="get_Sale"))
 
                     elif data.get('action') == "SaleFalsePagination":
                         page = int(data.get('id'))
@@ -835,7 +721,9 @@ class Users:
                                                                  action="SaleFalsePagination",
                                                                  page=page))
                         else:
-                            await callback.message.edit_text(text="Не найдено!")
+                            await callback.message.edit_text(text="Не найдено!",
+                                                             reply_markup=await Users.back_ikb(target="Sale",
+                                                                                               action="get_Sale"))
 
                     elif data.get("action") == "saleCheckApproved":
                         page = int(data.get('id'))
@@ -880,7 +768,9 @@ class Users:
                                 pass
 
                         else:
-                            await callback.message.edit_text(text="Не найдено!")
+                            await callback.message.edit_text(text="Не найдено!",
+                                                             reply_markup=await Users.back_ikb(target="Sale",
+                                                                                               action="get_Sale"))
 
                     elif data.get("action") == "SaleApproved":
                         sale_id = int(data.get('id'))
@@ -962,7 +852,9 @@ class Users:
                                                               page=page)
                                                           )
                         else:
-                            await callback.message.edit_text(text="Не найдено!")
+                            await callback.message.edit_text(text="Не найдено!",
+                                                             reply_markup=await Users.back_ikb(target="Buy",
+                                                                                               action="get_Buy"))
 
                     elif data.get('action') == "BuyFalse":
                         buyTrue = list(filter(lambda x: x.status == False, await CRUDPurchases.get_all()))
@@ -1013,7 +905,9 @@ class Users:
                                                               page=page)
                                                           )
                         else:
-                            await callback.message.edit_text(text="Не найдено!")
+                            await callback.message.edit_text(text="Не найдено!",
+                                                             reply_markup=await Users.back_ikb(target="Buy",
+                                                                                               action="get_Buy"))
 
                     elif data.get("action") == "buyCheckApproved":
                         page = int(data.get('id'))
@@ -1058,7 +952,9 @@ class Users:
                                 pass
 
                         else:
-                            await callback.message.edit_text(text="Не найдено!")
+                            await callback.message.edit_text(text="Не найдено!",
+                                                             reply_markup=await Users.back_ikb(target="Buy",
+                                                                                               action="get_Buy"))
 
                     elif data.get("action") == "BuyApproved":
                         purchase_id = int(data.get('id'))
