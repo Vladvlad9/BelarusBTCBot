@@ -1,6 +1,8 @@
 import asyncio
 import logging
+import random
 import re
+import string
 from decimal import Decimal
 
 from aiogram.dispatcher import FSMContext
@@ -21,10 +23,28 @@ from loader import bot
 from schemas import TransactionsSchema, PurchasesSchema, SalesSchema
 from states.users.userStates import UserStates
 
+from PIL import ImageFont, ImageDraw, Image
 main_cb = CallbackData("main", "target", "action", "id", "editId")
 
 
 class MainForms:
+    @staticmethod
+    async def create_captcha(text: str) -> str:
+        image = Image.new('RGB', (200, 100), color='white')
+        draw = ImageDraw.Draw(image)
+        font = ImageFont.truetype('font/arial.ttf', size=30)
+        draw.text((50, 25), text, font=font, fill='black')
+
+        file_path = 'captcha.png'
+        image.save(file_path)
+        return file_path
+
+    @staticmethod
+    async def get_captcha() -> dict:
+        captcha_text = ''.join([random.choice(string.ascii_letters) for _ in range(6)])
+        file_path = await MainForms.create_captcha(captcha_text)
+        return {"captcha_text": captcha_text, "file_path": file_path}
+
     @staticmethod
     async def send_timer_message(chat_id: int, state):
         await state.finish()
@@ -33,9 +53,9 @@ class MainForms:
             await asyncio.sleep(0)
             user.transaction_timer = False
             await CRUDUsers.update(user=user)
+            await bot.send_message(chat_id=chat_id, text="Время вышло!")
             await bot.send_message(chat_id=chat_id,
-                                   text='Время вышло!\n'
-                                        f'{CONFIGTEXT.MAIN_FORM.TEXT}',
+                                   text=f'{CONFIGTEXT.MAIN_FORM.TEXT}',
                                    reply_markup=await MainForms.main_kb())
         else:
             await asyncio.sleep(0)
@@ -64,18 +84,18 @@ class MainForms:
         get_state_data = await state.get_data()
 
         text = f"<b>✅Заявка успешно создана.</b>\n\n" \
-               f"💵<b>Получаете</b>: {get_state_data['amount']} {get_state_data['coin']}\n\n" \
+               f"💵<b>Получаете</b>: <u>{get_state_data['amount']}</u> <u>{get_state_data['coin']}</u>\n\n" \
                f"<b>{get_state_data['coin']}-адрес</b>:\n" \
                f"<code>{message.text}</code>\n\n" \
-               f"💵Сумма к оплате: {get_state_data['buy']} {get_state_data['currency_abbreviation']}\n\n" \
-               f"Резквизиты для оплаты:\n\n" \
+               f"💵<b>Сумма к оплате</b>: <u>{get_state_data['buy']}</u> <u>{get_state_data['currency_abbreviation']}</u>\n\n" \
+               f"<b>Резквизиты для оплаты:</b>\n\n" \
                f"- ЕРИП ПЛАТЕЖИ\n" \
                f"- БАНКОВСКИЕ ФИНАНСОВЫЕ УСЛУГИ\n" \
                f"- БАНКИ НКФО\n" \
                f"- БАНК ДАБРАБЫТ\n" \
                f"- ПОПОЛН. СЧЕТА ПО НОМ.КАРТЫ\n" \
                f"- 14276766\n\n" \
-               f"⏳Заявка действительна: 15 минут\n\n" \
+               f"⏳<b>Заявка действительна: <u>15 минут</u></b>\n\n" \
                f'☑️После успешного перевода денег по указанным реквизитам нажмите на кнопку ' \
                f'"<b>Я оплатил(а)</b>" или же вы можете отменить данную заявку, ' \
                f'нажав на кнопку "<b>Отменить заявку</b>".'
@@ -120,7 +140,7 @@ class MainForms:
 
     @staticmethod
     async def confirmation_timer(message, applicationNumber):
-        await message.answer(text=f"Заявка №<code>{applicationNumber}</code>  успешно создана")
+        await message.answer(text=f"Заявка №<code>{applicationNumber}</code> успешно создана")
         await message.answer(text=CONFIGTEXT.MAIN_FORM.TEXT,
                              reply_markup=await MainForms.main_kb(),
                              parse_mode="HTML")
@@ -357,17 +377,17 @@ class MainForms:
                                          callback_data=main_cb.new(target, action, 0, 0)),
                 ],
                 [
-                    InlineKeyboardButton(text="Отменить заявку", callback_data=main_cb.new("Main", 0, 0, 0))
+                    InlineKeyboardButton(text="Отменить заявку", callback_data=main_cb.new("Main", "Captcha", 0, 0))
                 ]
             ]
         )
 
     @staticmethod
-    async def back_ikb(target: str, action: str) -> InlineKeyboardMarkup:
+    async def back_ikb(target: str, action: str, coin_id: int = 0) -> InlineKeyboardMarkup:
         return InlineKeyboardMarkup(
             inline_keyboard=[
                 [
-                    InlineKeyboardButton(text="◀️ Назад", callback_data=main_cb.new(target, action, 0, 0))
+                    InlineKeyboardButton(text="◀️ Назад", callback_data=main_cb.new(target, action, coin_id, 0))
                 ]
             ]
         )
@@ -379,27 +399,38 @@ class MainForms:
                 data = main_cb.parse(callback_data=callback.data)
 
                 if data.get("target") == "Main":
-                    user = await CRUDUsers.get(user_id=callback.from_user.id)
-                    user.transaction_timer = False
-                    await CRUDUsers.update(user=user)
-                    await state.finish()
+                    if data.get("action") == 'main':
+                        user = await CRUDUsers.get(user_id=callback.from_user.id)
+                        user.transaction_timer = False
+                        await CRUDUsers.update(user=user)
+                        await state.finish()
 
-                    await callback.message.answer(text=CONFIGTEXT.MAIN_FORM.TEXT,
-                                                  reply_markup=await MainForms.main_kb())
+                        await callback.message.answer(text=CONFIGTEXT.MAIN_FORM.TEXT,
+                                                      reply_markup=await MainForms.main_kb())
+
+                    elif data.get('action') == "Captcha":
+                        captcha = await MainForms.get_captcha()
+
+                        user = await CRUDUsers.get(user_id=callback.from_user.id)
+                        user.check_captcha = False
+                        user.transaction_timer = False
+                        user.captcha = captcha['captcha_text']
+                        await CRUDUsers.update(user=user)
+
+                        await bot.send_photo(chat_id=callback.message.chat.id,
+                                             photo=open(captcha["file_path"], 'rb'))
+
+                        await bot.send_message(chat_id=callback.message.chat.id,
+                                               text="В целях безопасности🔐 \n"
+                                                     "Подтвердить что вы не бот😎✅, "
+                                                    "чтобы пользоваться ресурсом 🤖Bot🤖\n"
+                                                     "Введите символы с картинки")
+
+                        await UserStates.Captcha.set()
 
                 elif data.get("target") == "Buy":
-                    # if data.get("action") == "getBuy":
-                    #     text = "Выберите валюту."
-                    #     await state.update_data(exchangeType="buy")
-                    #     await callback.message.edit_text(text=text,
-                    #                                      reply_markup=await MainForms.currency_ikb(
-                    #                                          target='Buy',
-                    #                                          action='currency_buy')
-                    #                                      )
-
                     if data.get("action") == "currency_buy":
-                        # await state.update_data(currency=data.get("id"))
-                        # await state.update_data(currency_abbreviation=await MainForms.abbreviation(data.get("id")))
+                        await state.finish()
                         text = "Выберите валюту которую вы хотите купить."
                         await callback.message.edit_text(text=text,
                                                          reply_markup=await MainForms.coin_ikb(target="Buy",
@@ -438,18 +469,8 @@ class MainForms:
                             await state.finish()
 
                 elif data.get("target") == "Sell":
-                    # if data.get("action") == "getSell":
-                    #     text = "Выберите валюту."
-                    #     await state.update_data(exchangeType="sell")
-                    #     await callback.message.edit_text(text=text,
-                    #                                      reply_markup=await MainForms.currency_ikb(
-                    #                                          target='Sell',
-                    #                                          action='currency_buy')
-                    #                                      )
-
                     if data.get("action") == "currency_buy":
-                        # await state.update_data(currency=data.get("id"))
-                        # await state.update_data(currency_abbreviation=await MainForms.abbreviation(data.get("id")))
+                        await state.finish()
 
                         await state.update_data(exchangeType="sell")
                         await state.update_data(currency="BYN")
@@ -519,52 +540,66 @@ class MainForms:
                     getData = await state.get_data()
                     if getData['exchangeType'] == "buy":
                         if message.text.isdigit():
-                            try:
-                                amount = await Check_currency.commaToDot(amount=message.text)
+                            if CONFIG.COMMISSION.MIN_BYN <= int(message.text):
+                                try:
+                                    amount = await Check_currency.commaToDot(amount=message.text)
 
-                                await state.update_data(amount=amount)
-                                get_state_data = await state.get_data()
-                                abbreviation = await MainForms.abbreviation(get_state_data['coin'])
-                                buy = await MainForms.buy(coin=get_state_data['coin'],
-                                                          currency=get_state_data['currency'],
-                                                          amount=get_state_data['amount'])
+                                    await state.update_data(amount=amount)
+                                    get_state_data = await state.get_data()
+                                    abbreviation = await MainForms.abbreviation(get_state_data['coin'])
+                                    buy = await MainForms.buy(coin=get_state_data['coin'],
+                                                              currency=get_state_data['currency'],
+                                                              amount=get_state_data['amount'])
 
-                                await state.update_data(buy=buy)
-                                check_currency = Check_currency(amount=get_state_data['amount'],
+                                    await state.update_data(buy=buy)
+                                    check_currency = Check_currency(amount=get_state_data['amount'],
                                                                     abbreviation=abbreviation,
                                                                     exchange_type=get_state_data['exchangeType'],
                                                                     buy=buy,
                                                                     currency=get_state_data['currency'],
                                                                     coin=get_state_data['coin'])
 
-                                get_text = await check_currency.get_text_Buy(integerNumber=True, state=state)
+                                    get_text = await check_currency.get_text_Buy(integerNumber=True, state=state)
 
-                                if get_text:
-                                    if get_state_data['exchangeType'] == "sell":
-                                        await message.answer(text=get_text,
-                                                             reply_markup=await MainForms.back_ikb(target="Main",
-                                                                                                   action="0"),
-                                                             parse_mode="HTML")
+                                    if get_text:
+                                        if get_state_data['exchangeType'] == "sell":
+                                            await message.answer(text=get_text,
+                                                                 reply_markup=await MainForms.back_ikb(
+                                                                     target="Sell",
+                                                                     action="currency_buy"),
+                                                                 parse_mode="HTML")
+                                        else:
+                                            await message.answer(text=get_text[0])
+                                            await message.answer(text=get_text[1],
+                                                                 reply_markup=await MainForms.back_ikb(
+                                                                     target="Buy",
+                                                                     action="currency_buy"),
+                                                                 parse_mode="HTML")
+                                            user = await CRUDUsers.get(user_id=message.from_user.id)
+                                            user.transaction_timer = True
+                                            await CRUDUsers.update(user=user)
                                     else:
-                                        await message.answer(text=get_text[0])
-                                        await message.answer(text=get_text[1],
-                                                             reply_markup=await MainForms.back_ikb(target="Main",
-                                                                                                   action="0"),
-                                                             parse_mode="HTML")
-                                        user = await CRUDUsers.get(user_id=message.from_user.id)
-                                        user.transaction_timer = True
-                                        await CRUDUsers.update(user=user)
-                                else:
+                                        await message.answer(text="Не вверно введены данные",
+                                                             reply_markup=await MainForms.back_ikb(
+                                                                 target="Buy",
+                                                                 action="currency_buy"))
+                                        await UserStates.Buy.set()
+                                except ValueError as e:
                                     await message.answer(text="Не вверно введены данные",
-                                                         reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                                                         reply_markup=await MainForms.back_ikb(
+                                                             target="Buy",
+                                                             action="currency_buy"))
                                     await UserStates.Buy.set()
-                            except ValueError as e:
-                                await message.answer(text="Не вверно введены данные",
-                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                                    logging.error(f"Error {e}")
+                            else:
+                                await message.answer(text=f"Минимальная сумма {CONFIG.COMMISSION.MIN_BYN} BYN\n"
+                                                          f"Введите новую сумму",
+                                                     reply_markup=await MainForms.back_ikb(target="Buy",
+                                                                                           action="currency_buy"))
                                 await UserStates.Buy.set()
-                                logging.error(f"Error {e}")
                         else:
-                            await message.answer(text="Неверно введены данные!")
+                            await message.answer(text="Неверно введены данные!\n"
+                                                      "Введите заново")
                             await UserStates.Buy.set()
                     else:
                         try:
@@ -591,113 +626,31 @@ class MainForms:
                             else:
                                 get_text = await check_currency.get_text_Buy(integerNumber=True, state=state)
 
-
                             if get_text:
                                 if get_state_data['exchangeType'] == "sell":
                                     await message.answer(text=get_text,
                                                          reply_markup=await MainForms.back_ikb(target="Main",
-                                                                                               action="0"),
+                                                                                               action="main"),
                                                          parse_mode="HTML")
                                 else:
                                     await message.answer(text=get_text[0])
                                     await message.answer(text=get_text[1],
                                                          reply_markup=await MainForms.back_ikb(target="Main",
-                                                                                               action="0"),
+                                                                                               action="main"),
                                                          parse_mode="HTML")
                                     user = await CRUDUsers.get(user_id=message.from_user.id)
                                     user.transaction_timer = True
                                     await CRUDUsers.update(user=user)
                             else:
                                 await message.answer(text="Не вверно введены данные",
-                                                     reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                                                     reply_markup=await MainForms.back_ikb(target="Main",
+                                                                                           action="main"))
                                 await UserStates.Buy.set()
                         except ValueError as e:
                             await message.answer(text="Не вверно введены данные",
-                                                 reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                                                 reply_markup=await MainForms.back_ikb(target="Main", action="main"))
                             await UserStates.Buy.set()
                             logging.error(f"Error {e}")
-
-                    # try:
-                    #     if len(message.text) < 3:
-                    #         buy = await MainForms.buy(coin=get_state_data['coin'],
-                    #                                   currency=get_state_data['currency'],
-                    #                                   amount=get_state_data['amount'])
-                    #
-                    #         if get_state_data['exchangeType'] == "sell":
-                    #             text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                    #                    f"{buy} {get_state_data['currency']}" \
-                    #                 if get_state_data['exchangeType'] == "sell" \
-                    #                 else f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                    #                      f"{message.text} {abbreviation}"
-                    #
-                    #             await UserStates.ERIP.set()
-                    #         else:
-                    #             text = f"Сумма к получению: {get_state_data['amount']} {abbreviation}\n" \
-                    #                    f"Сумма к оплате: {buy} {get_state_data['currency']}\n\n" \
-                    #                    f"📝Введите {get_state_data['coin']}-адрес кошелька," \
-                    #                    f"куда вы хотите отправить " \
-                    #                    f"{get_state_data['amount']} {abbreviation}"
-                    #             await UserStates.Wallet.set()
-                    #
-                    #     elif message.text.find("0") != -1:
-                    #         buy = await MainForms.buy(coin=get_state_data['coin'],
-                    #                                   currency=get_state_data['currency'],
-                    #                                   amount=get_state_data['amount'])
-                    #
-                    #         if get_state_data['exchangeType'] == "sell":
-                    #             text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                    #                    f"{buy} {get_state_data['currency']}" \
-                    #                 if get_state_data['exchangeType'] == "sell" \
-                    #                 else f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                    #                      f"{buy} {get_state_data['currency']}"
-                    #
-                    #             await UserStates.ERIP.set()
-                    #         else:
-                    #             text = f"Сумма к получению: {get_state_data['amount']} {abbreviation}\n" \
-                    #                    f"Сумма к оплате: {buy} {get_state_data['currency']}\n\n" \
-                    #                    f"📝Введите {get_state_data['coin']}-адрес кошелька," \
-                    #                    f"куда вы хотите отправить " \
-                    #                    f"{get_state_data['amount']} {abbreviation}"
-                    #
-                    #             await UserStates.Wallet.set()
-                    #
-                    #         # text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                    #         #        f"{buy} {get_state_data['currency']}"
-                    #
-                    #     else:
-                    #         buy = await MainForms.buy_to_currency(coin=get_state_data['coin'],
-                    #                                               currency=get_state_data['currency'],
-                    #                                               amount=get_state_data['amount'])
-                    #
-                    #         if get_state_data['exchangeType'] == "sell":
-                    #             text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                    #                    f"{buy} {get_state_data['currency']}" \
-                    #                 if get_state_data['exchangeType'] == "sell" \
-                    #                 else f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                    #                      f"{buy} {abbreviation}"
-                    #
-                    #             await UserStates.ERIP.set()
-                    #         else:
-                    #             text = f"Сумма к получению: {get_state_data['amount']} {abbreviation}\n"\
-                    #                    f"Сумма к оплате: {buy} {get_state_data['currency']} \n\n" \
-                    #                    f"📝Введите {get_state_data['coin']}-адрес кошелька,"\
-                    #                    f"куда вы хотите отправить "\
-                    #                    f"{get_state_data['amount']} {abbreviation}"
-                    #
-                    #             await UserStates.Wallet.set()
-                    #
-                    #         # text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить {buy} {abbreviation}"
-                    #
-                    #     await state.update_data(buy=buy)
-                    #     await message.answer(text=text,
-                    #                          reply_markup=await MainForms.back_ikb(target="Main", action="0"),
-                    #                          parse_mode="HTML")
-                    #
-                    # except Exception as e:
-                    #     await message.answer(text="Не вверно введены данные",
-                    #                          reply_markup=await MainForms.back_ikb(target="Main", action="0"))
-                    #     await UserStates.Buy.set()
-                    #     logging.error(f"Error {e}")
 
                 elif await state.get_state() == "UserStates:ERIP":
                     get_state_data = await state.get_data()
@@ -751,7 +704,7 @@ class MainForms:
                             text = f"Адреса кошелька <code>{message.text}</code> нет в blockchain\n" \
                                    f"Введите еще раз адрес"
                             await message.answer(text=text, parse_mode="HTML",
-                                                 reply_markup=await MainForms.back_ikb(target="Main", action=""))
+                                                 reply_markup=await MainForms.back_ikb(target="Main", action="main"))
                     else:
                         await message.answer(text=f"У вас вышло время на оплату!\n"
                                                   f"{CONFIGTEXT.MAIN_FORM.TEXT}",
@@ -836,7 +789,7 @@ class MainForms:
                                         await message.answer(text="Ошибка, попробуйте снова или "
                                                                   "обратитесь к администраторам",
                                                              reply_markup=await MainForms.back_ikb(target="Main",
-                                                                                                   action=""))
+                                                                                                   action="main"))
                                 except Exception as e:
                                     logging.error(f'Error UserStates:UserPhoto: {e}')
                         else:

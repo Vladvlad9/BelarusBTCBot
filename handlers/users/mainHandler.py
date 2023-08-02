@@ -37,10 +37,11 @@ async def get_captcha() -> dict:
 
 
 @dp.message_handler(commands=["start"], state=UserStates.all_states)
-async def registration_starts_state(message: types.Message):
+async def registration_starts_state(message: types.Message, state: FSMContext):
     user = await CRUDUsers.get(user_id=message.from_user.id)
     if user:
         if user.check_captcha:
+            await state.finish()
             await message.delete()
             await message.answer(text=CONFIGTEXT.MAIN_FORM.TEXT, reply_markup=await MainForms.main_kb())
         else:
@@ -83,29 +84,92 @@ async def registration_start(message: types.Message):
 
 @dp.message_handler(text="Купить 💰")
 async def Buy(message: types.Message):
-    text = "Выберите валюту которую вы хотите купить."
-    await message.delete()
-    await message.answer(text=text,
-                         reply_markup=await MainForms.coin_ikb(target="Buy",
-                                                               action="coin_buy")
-                         )
+    user = await CRUDUsers.get(user_id=message.from_user.id)
+    if user:
+        if user.check_captcha:
+            text = "Выберите валюту которую вы хотите купить."
+            await message.delete()
+            await message.answer(text=text,
+                                 reply_markup=await MainForms.coin_ikb(target="Buy",
+                                                                       action="coin_buy")
+                                 )
+        else:
+            captcha = await MainForms.get_captcha()
+            user.captcha = captcha['captcha_text']
+            await CRUDUsers.update(user=user)
+
+            await bot.send_photo(chat_id=message.chat.id,
+                                 photo=open(captcha["file_path"], 'rb'))
+
+            await bot.send_message(chat_id=message.chat.id,
+                                   text="В целях безопасности🔐 \n"
+                                        "Подтвердить что вы не бот😎✅, "
+                                        "чтобы пользоваться ресурсом 🤖Bot🤖\n"
+                                        "Введите символы с картинки")
+
+            await UserStates.Captcha.set()
+
+    else:
+        await message.answer(text='Я тебя не знаю!')
 
 
 @dp.message_handler(text="Продать 📈")
 async def Sell(message: types.Message):
-    text = "Выберите валюту которую вы хотите продать."
-    await message.delete()
-    await message.answer(text=text,
-                         reply_markup=await MainForms.coin_ikb(target="Sell",
-                                                               action="coin_buy")
-                         )
+    user = await CRUDUsers.get(user_id=message.from_user.id)
+    if user:
+        if user.check_captcha:
+            text = "Выберите валюту которую вы хотите продать."
+            await message.delete()
+            await message.answer(text=text,
+                                 reply_markup=await MainForms.coin_ikb(target="Sell",
+                                                                       action="coin_buy")
+                                 )
+        else:
+            captcha = await MainForms.get_captcha()
+            user.captcha = captcha['captcha_text']
+            await CRUDUsers.update(user=user)
+
+            await bot.send_photo(chat_id=message.chat.id,
+                                 photo=open(captcha["file_path"], 'rb'))
+
+            await bot.send_message(chat_id=message.chat.id,
+                                   text="В целях безопасности🔐 \n"
+                                        "Подтвердить что вы не бот😎✅, "
+                                        "чтобы пользоваться ресурсом 🤖Bot🤖\n"
+                                        "Введите символы с картинки")
+
+            await UserStates.Captcha.set()
+
+    else:
+        await message.answer(text='Я тебя не знаю!')
 
 
 @dp.message_handler(text="Контакты 💬")
 async def Contacts(message: types.Message):
-    text = "Контакты"
-    await message.answer(text=text,
-                         reply_markup=await MainForms.contacts_ikb())
+    user = await CRUDUsers.get(user_id=message.from_user.id)
+    if user:
+        if user.check_captcha:
+            text = "Контакты"
+            await message.answer(text=text,
+                                 reply_markup=await MainForms.contacts_ikb())
+        else:
+            captcha = await MainForms.get_captcha()
+            user.captcha = captcha['captcha_text']
+            await CRUDUsers.update(user=user)
+
+            await bot.send_photo(chat_id=message.chat.id,
+                                 photo=open(captcha["file_path"], 'rb'))
+
+            await bot.send_message(chat_id=message.chat.id,
+                                   text="В целях безопасности🔐 \n"
+                                        "Подтвердить что вы не бот😎✅, "
+                                        "чтобы пользоваться ресурсом 🤖Bot🤖\n"
+                                        "Введите символы с картинки")
+
+            await UserStates.Captcha.set()
+
+    else:
+        await message.answer(text='Я тебя не знаю!')
 
 
 @dp.message_handler(state=UserStates.Captcha)
