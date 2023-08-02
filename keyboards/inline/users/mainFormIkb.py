@@ -700,43 +700,29 @@ class MainForms:
                     #     logging.error(f"Error {e}")
 
                 elif await state.get_state() == "UserStates:ERIP":
-                    if re.match(r"^[0-9]{11}$", message.text):
-                        get_state_data = await state.get_data()
-                        abbreviation = await MainForms.abbreviation(get_state_data['coin'])
+                    get_state_data = await state.get_data()
+                    abbreviation = await MainForms.abbreviation(get_state_data['coin'])
 
-                        # text = f"Сумма к получению: {get_state_data['amount']} {abbreviation}\n" \
-                        #        f"Сумма к оплате: {get_state_data['buy']} {get_state_data['currency']}\n\n"
+                    text = "✅Заявка успешно создана.\n\n" \
+                           f"Продаете: <b>{get_state_data['buy']} {get_state_data['currency_abbreviation']}</b>\n" \
+                           f"ЕРИП РБ реквизиты: <code>{message.text}</code>\n\n" \
+                           f"💵Получаете: <code>{get_state_data['amount']} {get_state_data['coin']}</code>\n" \
+                           f"<b>Реквизиты для перевода {get_state_data['currency_abbreviation']}:</b>\n\n" \
+                           "<code>____________________</code>\n\n" \
+                           "⏳<b>Заявка действительна: 15 минут</b>\n\n" \
+                           '☑️После успешного перевода денег по указанному кошельку нажмите на кнопку ' \
+                           '"Я оплатил(а)" или же вы можете отменить данную заявку, ' \
+                           'нажав на кнопку "Отменить заявку".'
 
-                        text = "✅Заявка успешно создана.\n\n" \
-                               f"Продаете: <b>{get_state_data['buy']} {get_state_data['currency_abbreviation']}</b>\n" \
-                               f"ЕРИП РБ реквизиты: <code>{message.text}</code>\n\n" \
-                               f"💵Получаете: <code>{get_state_data['amount']} {get_state_data['coin']}</code>\n" \
-                               f"<b>Реквизиты для перевода {get_state_data['currency_abbreviation']}:</b>\n\n" \
-                               "<code>____________________</code>\n\n" \
-                               "⏳<b>Заявка действительна: 15 минут</b>\n\n" \
-                               '☑️После успешного перевода денег по указанному кошельку нажмите на кнопку ' \
-                               '"Я оплатил(а)" или же вы можете отменить данную заявку, ' \
-                               'нажав на кнопку "Отменить заявку".'
+                    await message.answer(text=text,
+                                         reply_markup=await MainForms.confirmation_ikb(target="Sell",
+                                                                                       action="confirmation_buy"),
+                                         parse_mode="HTML")
 
-                        # await message.answer(text=text,
-                        #                      reply_markup=await MainForms.back_ikb(target="Main",
-                        #                                                            action="0"))
-
-                        await message.answer(text=text,
-                                             reply_markup=await MainForms.confirmation_ikb(target="Sell",
-                                                                                           action="confirmation_buy"),
-                                             parse_mode="HTML")
-
-                        await state.update_data(erip=message.text)
-                        user = await CRUDUsers.get(user_id=message.from_user.id)
-                        user.transaction_timer = True
-                        await CRUDUsers.update(user=user)
-                        # await UserStates.Wallet.set()
-                    else:
-                        text = "ЕРИП введен не верно\n" \
-                               "Попробуйте ввести еще раз"
-                        await message.answer(text=text,
-                                             reply_markup=await MainForms.back_ikb(target="Main", action="0"))
+                    await state.update_data(erip=message.text)
+                    user = await CRUDUsers.get(user_id=message.from_user.id)
+                    user.transaction_timer = True
+                    await CRUDUsers.update(user=user)
 
                 elif await state.get_state() == "UserStates:Wallet":
                     user = await CRUDUsers.get(user_id=message.from_user.id)
