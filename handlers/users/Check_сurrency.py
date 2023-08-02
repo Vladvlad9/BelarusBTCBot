@@ -26,12 +26,14 @@ class Check_currency():
                 await state.update_data(buy=self.amount)
 
                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                       f"{round(get_BYN_Btc, 2)} {self.coin}"
+                       f"{round(get_BYN_Btc, 2)} {self.coin}\n\n" \
+                       f"Сумма к <b>продаже</b> <code>{self.amount}</code>"
                 await UserStates.ERIP.set()
                 return text
             else:
                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                       f"{self.buy} {self.currency[0]}"
+                       f"{self.buy} {self.currency[0]}\n\n" \
+                       f"Сумма к <b>продаже</b> <code>{self.amount}</code>"
                 pass
                 await UserStates.ERIP.set()
                 return text

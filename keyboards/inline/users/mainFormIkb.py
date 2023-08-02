@@ -32,7 +32,8 @@ class MainForms:
     async def create_captcha(text: str) -> str:
         image = Image.new('RGB', (200, 100), color='white')
         draw = ImageDraw.Draw(image)
-        font = ImageFont.truetype('font/arial.ttf', size=30)
+        font = ImageFont.truetype('/opt/git/BelarusBTCBot/font/arial.ttf', size=30)
+        # font = ImageFont.truetype('font/arial.ttf', size=30)
         draw.text((50, 25), text, font=font, fill='black')
 
         file_path = 'captcha.png'
@@ -568,6 +569,11 @@ class MainForms:
                                                                      target="Sell",
                                                                      action="currency_buy"),
                                                                  parse_mode="HTML")
+
+                                            user = await CRUDUsers.get(user_id=message.from_user.id)
+                                            user.transaction_timer = True
+                                            await CRUDUsers.update(user=user)
+
                                         else:
                                             await message.answer(text=get_text[0])
                                             await message.answer(text=get_text[1],
@@ -632,12 +638,17 @@ class MainForms:
                                                          reply_markup=await MainForms.back_ikb(target="Main",
                                                                                                action="main"),
                                                          parse_mode="HTML")
+
+                                    user = await CRUDUsers.get(user_id=message.from_user.id)
+                                    user.transaction_timer = True
+                                    await CRUDUsers.update(user=user)
                                 else:
                                     await message.answer(text=get_text[0])
                                     await message.answer(text=get_text[1],
                                                          reply_markup=await MainForms.back_ikb(target="Main",
                                                                                                action="main"),
                                                          parse_mode="HTML")
+
                                     user = await CRUDUsers.get(user_id=message.from_user.id)
                                     user.transaction_timer = True
                                     await CRUDUsers.update(user=user)
@@ -651,18 +662,19 @@ class MainForms:
                                                  reply_markup=await MainForms.back_ikb(target="Main", action="main"))
                             await UserStates.Buy.set()
                             logging.error(f"Error {e}")
+                    user = await CRUDUsers.get(user_id=message.from_user.id)
+                    user.transaction_timer = True
+                    await CRUDUsers.update(user=user)
 
                 elif await state.get_state() == "UserStates:ERIP":
                     get_state_data = await state.get_data()
                     abbreviation = await MainForms.abbreviation(get_state_data['coin'])
 
                     text = "✅Заявка успешно создана.\n\n" \
-                           f"Продаете: <b>{get_state_data['buy']} {get_state_data['currency_abbreviation']}</b>\n" \
+                           f"Продаете: <code>{get_state_data['amount']} {get_state_data['coin']}</code>\n" \
                            f"ЕРИП РБ реквизиты: <code>{message.text}</code>\n\n" \
-                           f"💵Получаете: <code>{get_state_data['amount']} {get_state_data['coin']}</code>\n" \
-                           f"<b>Реквизиты для перевода {get_state_data['currency_abbreviation']}:</b>\n\n" \
-                           "<code>____________________</code>\n\n" \
-                           "⏳<b>Заявка действительна: 15 минут</b>\n\n" \
+                           f"💵Получаете: <code>{round(get_state_data['buy'],2)} {get_state_data['currency_abbreviation']}</code>\n"\
+                           "⏳<b>Заявка действительна: <code>15 минут</code></b>\n\n" \
                            '☑️После успешного перевода денег по указанному кошельку нажмите на кнопку ' \
                            '"Я оплатил(а)" или же вы можете отменить данную заявку, ' \
                            'нажав на кнопку "Отменить заявку".'
@@ -676,6 +688,9 @@ class MainForms:
                     user = await CRUDUsers.get(user_id=message.from_user.id)
                     user.transaction_timer = True
                     await CRUDUsers.update(user=user)
+
+                    await asyncio.sleep(int(60))
+                    await MainForms.send_timer_message(chat_id=message.from_user.id, state=state)
 
                 elif await state.get_state() == "UserStates:Wallet":
                     user = await CRUDUsers.get(user_id=message.from_user.id)

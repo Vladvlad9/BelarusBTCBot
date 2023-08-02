@@ -23,6 +23,7 @@ async def create_captcha(text: str) -> str:
     image = Image.new('RGB', (200, 100), color='white')
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype('/opt/git/BelarusBTCBot/font/arial.ttf', size=30)
+    # font = ImageFont.truetype('font/arial.ttf', size=30)
     draw.text((50, 25), text, font=font, fill='black')
 
     file_path = 'captcha.png'
