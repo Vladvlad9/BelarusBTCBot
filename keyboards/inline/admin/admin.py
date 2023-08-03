@@ -431,7 +431,7 @@ class AdminForm:
                             'Валюта': currency,
                             'Продано': quantity,
                             'Монета': coin,
-                            'Разница': commission,
+                            'Разница': moneyDifference,
                             'Комиссия': commission,
                             'Кошелек': wallet,
                             'Дата сделки': date,
