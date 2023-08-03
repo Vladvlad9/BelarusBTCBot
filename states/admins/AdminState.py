@@ -2,7 +2,8 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 
 
 class AdminState(StatesGroup):
-    COMMISSION = State()
+    COMMISSIONSale = State()
+    COMMISSIONBuy = State()
     REQUISITES = State()
 
     CheckNumber = State()
@@ -25,3 +26,5 @@ class AdminState(StatesGroup):
 
     MinBYN = State()
     MinRUB = State()
+
+    WALLET = State()

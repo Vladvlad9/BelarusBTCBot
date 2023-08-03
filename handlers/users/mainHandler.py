@@ -67,9 +67,7 @@ async def registration_start(message: types.Message):
             await UserStates.Captcha.set()
             await bot.send_photo(chat_id=message.chat.id,
                                  photo=open(captcha["file_path"], 'rb'),
-                                 caption="В целях безопасности🔐 \n"
-                                         "Подтвердить что вы не бот😎✅, чтобы пользоваться ресурсом 🤖Bot🤖\n"
-                                         "Введите символы с картинки")
+                                 caption=CONFIGTEXT.FIRST_PAGE.TEXT)
     else:
         captcha = await get_captcha()
 

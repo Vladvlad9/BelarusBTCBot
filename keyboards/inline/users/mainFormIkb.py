@@ -19,6 +19,7 @@ from crud.saleCRUD import CRUDSales
 from crud.transactionCRUD import CRUDTransactions
 from handlers.users.Check_сurrency import Check_currency
 from handlers.users.Cryptocurrency import Cryptocurrency
+from keyboards.inline.admin.paymentSettings import PaymentSettings
 from loader import bot
 from schemas import TransactionsSchema, PurchasesSchema, SalesSchema
 from states.users.userStates import UserStates
@@ -83,20 +84,16 @@ class MainForms:
     @staticmethod
     async def receipt(state, message) -> str:
         get_state_data = await state.get_data()
+        requisites = CONFIGTEXT.RequisitesBYN.TEXT
 
         text = f"<b>✅Заявка успешно создана.</b>\n\n" \
                f"💵<b>Получаете</b>: <u>{get_state_data['amount']}</u> <u>{get_state_data['coin']}</u>\n\n" \
                f"<b>{get_state_data['coin']}-адрес</b>:\n\n" \
                f"<code>{message.text}</code>\n\n" \
                f"💵<b>Сумма к оплате</b>: <u>{get_state_data['buy']}</u> <u>{get_state_data['currency_abbreviation']}</u>\n\n" \
-               f"<b>Резквизиты для оплаты:</b>\n\n" \
-               f"- ЕРИП ПЛАТЕЖИ\n" \
-               f"- БАНКОВСКИЕ ФИНАНСОВЫЕ УСЛУГИ\n" \
-               f"- БАНКИ НКФО\n" \
-               f"- БАНК ДАБРАБЫТ\n" \
-               f"- ПОПОЛН. СЧЕТА ПО НОМ.КАРТЫ\n" \
-               f"- 14276766\n\n" \
-               f"⏳<b>Заявка действительна: <u>15 минут</u></b>\n\n" \
+               f"<b>Реквизиты для оплаты:</b>\n\n" \
+               f"{requisites}" \
+               f"\n⏳<b>Заявка действительна: <u>15 минут</u></b>\n\n" \
                f'☑️После успешного перевода денег по указанным реквизитам нажмите на кнопку ' \
                f'"<b>Я оплатил(а)</b>" или же вы можете отменить данную заявку, ' \
                f'нажав на кнопку "<b>Отменить заявку</b>".'
@@ -119,17 +116,6 @@ class MainForms:
                    f"Получено: <code>{state_data['buy']} {state_data['currency_abbreviation']}</code>\n" \
                    f"Нужно отправить: <code>{state_data['amount']} {state_data['coin']}</code>\n" \
                    f"Кошелек: <code>{state_data['wallet']}</code>"
-
-            # text = f"Заявка № {applicationNumber}\n\n" \
-            #        f"Пользователь <code>{message.from_user.first_name}</code> хочет " \
-            #        f"<code>купить {state_data['amount']} {state_data['coin']}</code>\n\n" \
-            #        f"Кошелек: <code>{state_data['wallet']}</code>\n\n" \
-            #        f"Нужно Получить: {state_data['buy']} {state_data['currency_abbreviation']}"
-
-        # text = f"Заявка № {1}\n\n" \
-        #        f"Имя {message.from_user.first_name}\n" \
-        #        f"Получено {state_data['currency_abbreviation']}: {state_data['buy']}\n" \
-        #        f"Нужно отправить  {state_data['coin']}: {state_data['amount']}\n"
 
         tasks = []
         for admin in CONFIG.BOT.ADMINS:
@@ -422,10 +408,7 @@ class MainForms:
                                              photo=open(captcha["file_path"], 'rb'))
 
                         await bot.send_message(chat_id=callback.message.chat.id,
-                                               text="В целях безопасности🔐 \n"
-                                                     "Подтвердить что вы не бот😎✅, "
-                                                    "чтобы пользоваться ресурсом 🤖Bot🤖\n"
-                                                     "Введите символы с картинки")
+                                               text=CONFIGTEXT.FIRST_PAGE.TEXT)
 
                         await UserStates.Captcha.set()
 
@@ -675,7 +658,7 @@ class MainForms:
                            f"ЕРИП РБ реквизиты: <code>{message.text}</code>\n\n" \
                            f"💵Получаете: <code>{round(get_state_data['buy'],2)} {get_state_data['currency_abbreviation']}</code>\n\n" \
                            f"<b>Реквизиты для перевода {get_state_data['coin']}</b>:\n\n" \
-                           f"------------------------------\n\n"\
+                           f"{CONFIGTEXT.Wallet.TEXT}\n\n"\
                            "⏳<b>Заявка действительна: <code>15 минут</code></b>\n\n" \
                            '☑️После успешного перевода денег по указанному кошельку нажмите на кнопку ' \
                            '"<b>Я оплатил(а)</b>" или же вы можете отменить данную заявку, ' \

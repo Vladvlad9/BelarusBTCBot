@@ -13,8 +13,12 @@ class Requisites(BaseModel):
     TEXT: str
 
 
+class Wallets(BaseModel):
+    TEXT: str
+
+
 class ConfigTextSchema(BaseModel):
     MAIN_FORM: MAIN_FORM
     FIRST_PAGE: FIRST_PAGE
     RequisitesBYN: Requisites
-    RequisitesRUS: Requisites
+    Wallet: Wallets

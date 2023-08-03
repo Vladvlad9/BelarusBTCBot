@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message, InputFile
 from aiogram.utils.exceptions import BadRequest
@@ -7,7 +9,6 @@ from config.config import CONFIGTEXT
 from crud import CRUDUsers
 from crud.purchaseCRUD import CRUDPurchases
 from crud.saleCRUD import CRUDSales
-# from crud import CRUDUsers, CRUDTransaction, CRUDCurrency, CRUDOperation
 from handlers.AllCallbacks import admin_cb
 from loader import bot
 from states.admins.AdminState import AdminState
@@ -141,14 +142,15 @@ class AdminForm:
 
     @staticmethod
     async def payment_setup_ikb() -> InlineKeyboardMarkup:
-        data = {"% Комиссия": {"target": "PaymentSetup", "action": "get_Commission", "id": 0, "editId": 0},
-                "🧾 Расчетный Счет": {"target": "PaymentSetup", "action": "get_Settlement_Account", "id": 0,
-                                      "editId": 0},
-                "⏱ Таймер оплаты": {"target": "PaymentSetup", "action": "get_Timer", "id": 0, "editId": 0},
-                "🇧🇾 Минимально BYN": {"target": "PaymentSetup", "action": "get_MinBYN", "id": 0, "editId": 0},
-                "🇷🇺 Минимально RUB": {"target": "PaymentSetup", "action": "get_MinRUB", "id": 0, "editId": 0},
-                "◀️ Назад": {"target": "StartMenu", "action": "", "id": 0, "editId": 0},
-                }
+        data = {
+            "% Комиссия Покупки": {"target": "PaymentSetup", "action": "get_CommissionBuy", "id": 0, "editId": 0},
+            "% Комиссия Продажи": {"target": "PaymentSetup", "action": "get_CommissionSale", "id": 0, "editId": 0},
+            "🧾 ЕРИП": {"target": "PaymentSetup", "action": "get_Settlement_Account", "id": 0, "editId": 0},
+            "👛 Кошелек": {"target": "PaymentSetup", "action": "get_Wallet", "id": 0, "editId": 0},
+            "⏱ Таймер оплаты": {"target": "PaymentSetup", "action": "get_Timer", "id": 0, "editId": 0},
+            "🇧🇾 Минимально BYN": {"target": "PaymentSetup", "action": "get_MinBYN", "id": 0, "editId": 0},
+            "◀️ Назад": {"target": "StartMenu", "action": "", "id": 0, "editId": 0},
+        }
         return InlineKeyboardMarkup(
             inline_keyboard=[
                 [
@@ -159,8 +161,6 @@ class AdminForm:
                 ] for name, name_items in data.items()
             ]
         )
-
-
 
     @staticmethod
     async def process_admin_profile(callback: CallbackQuery = None, message: Message = None,
@@ -179,29 +179,44 @@ class AdminForm:
                                                          reply_markup=await AdminForm.payment_setup_ikb())
                         await state.finish()
 
-                    elif data.get("action") == "get_Commission":
+                    elif data.get("action") == "get_CommissionSale":
+                        await callback.message.edit_text(text=f"Комиссия Продажи составляет "
+                                                              f"{int(CONFIG.COMMISSION.COMMISSION_SALES)}%",
+                                                         reply_markup=await AdminForm.change_ikb(
+                                                             get_change="CommissionSale")
+                                                         )
+
+                    elif data.get("action") == "get_CommissionBuy":
                         await callback.message.edit_text(text=f"Комиссия покупки составляет "
                                                               f"{int(CONFIG.COMMISSION.COMMISSION_BUY)}%",
                                                          reply_markup=await AdminForm.change_ikb(
-                                                             get_change="COMMISSION")
+                                                             get_change="CommissionBuy")
                                                          )
 
                     elif data.get("action") == "get_Settlement_Account":
-                        await callback.message.edit_text(text=f"Расчётный счёт <i>{CONFIG.PAYMENT.REQUISITES}</i>",
+                        await callback.message.edit_text(text=f"<b>Реквизиты для оплаты:</b>\n\n"
+                                                              f"{CONFIGTEXT.RequisitesBYN.TEXT}",
                                                          reply_markup=await AdminForm.change_ikb(
                                                              get_change="REQUISITES"),
                                                          parse_mode="HTML"
                                                          )
+                        await AdminState.REQUISITES.set()
 
                     elif data.get("action") == "get_change":
                         get_change_data = str(data.get("editId"))
                         text, target, action = "", "", ""
 
-                        if get_change_data == "COMMISSION":
-                            text = "Введите новые данные для Комиссии"
+                        if get_change_data == "CommissionSale":
+                            text = "Введите новые данные для Комиссии Продажи"
                             target = "PaymentSetup"
                             action = "get_Setup"
-                            await AdminState.COMMISSION.set()
+                            await AdminState.COMMISSIONSale.set()
+
+                        if get_change_data == "CommissionBuy":
+                            text = "Введите новые данные для Комиссии Покупки"
+                            target = "PaymentSetup"
+                            action = "get_Setup"
+                            await AdminState.COMMISSIONBuy.set()
 
                         elif get_change_data == "REQUISITES":
                             text = "Введите новые данные для Расчётного счёта"
@@ -210,7 +225,7 @@ class AdminForm:
                             await AdminState.REQUISITES.set()
 
                         elif get_change_data == "TIMER":
-                            text = "Введите новые данные для Таймера"
+                            text = "Введите новые данные для Таймера в <b>минутах</b>"
                             target = "PaymentSetup"
                             action = "get_Setup"
                             await AdminState.Timer.set()
@@ -221,14 +236,8 @@ class AdminForm:
                             action = "get_Setup"
                             await AdminState.MinBYN.set()
 
-                        elif get_change_data == "MinRUB":
-                            text = "Введите новую минимальную сумму для RUB"
-                            target = "PaymentSetup"
-                            action = "get_Setup"
-                            await AdminState.MinBYN.set()
-
                         elif get_change_data == "FIRST_PAGE":
-                            text = "Введите текст для самой первой страницы при запуске бота"
+                            text = "Введите текст для ввода Captcha"
                             target = "Text_change"
                             action = "get_Сhange"
                             await AdminState.FIRST_PAGE.set()
@@ -245,19 +254,20 @@ class AdminForm:
                             action = "get_Сhange"
                             await AdminState.RequisitesBYN.set()
 
-                        elif get_change_data == "RequisitesRUS":
-                            text = "Введите данные для реквизитов"
-                            target = "Text_change"
-                            action = "get_Сhange"
-                            await AdminState.RequisitesRUS.set()
+                        elif get_change_data == "Wallet":
+                            text = "Введите Реквизиты для перевода Bitcoin:"
+                            target = "PaymentSetup"
+                            action = "get_Setup"
+                            await AdminState.WALLET.set()
 
                         await callback.message.edit_text(text=text,
+                                                         parse_mode="HTML",
                                                          reply_markup=await AdminForm.back_ikb(target=target,
                                                                                                action=action)
                                                          )
 
                     elif data.get("action") == "get_Timer":
-                        await callback.message.edit_text(text=f"Таймер: {CONFIG.PAYMENT_TIMER} сек",
+                        await callback.message.edit_text(text=f"Таймер: {CONFIG.PAYMENT_TIMER} мин.",
                                                          reply_markup=await AdminForm.change_ikb(
                                                              get_change="TIMER")
                                                          )
@@ -270,12 +280,13 @@ class AdminForm:
                                                          )
                         await AdminState.MinBYN.set()
 
-                    elif data.get("action") == "get_MinRUB":
-                        await callback.message.edit_text(text=f"Минимальная сумма RUB: {CONFIG.COMMISSION.MIN_RUB} руб.",
+                    elif data.get("action") == "get_Wallet":
+                        await callback.message.edit_text(text=f"Реквизиты для перевода Bitcoin: \n"
+                                                              f"{CONFIGTEXT.Wallet.TEXT} ",
                                                          reply_markup=await AdminForm.change_ikb(
-                                                             get_change="MinRUB")
+                                                             get_change="Wallet")
                                                          )
-                        await AdminState.MinRUB.set()
+                        await AdminState.WALLET.set()
 
                 elif data.get("target") == "Newsletter":
                     await state.finish()
@@ -444,13 +455,6 @@ class AdminForm:
                                                              get_change="RequisitesBYN")
                                                          )
 
-                    elif data.get("action") == "RequisitesRUS":
-                        await callback.message.edit_text(text=CONFIGTEXT.RequisitesRUS.TEXT,
-                                                         parse_mode="HTML",
-                                                         reply_markup=await AdminForm.change_ikb(
-                                                             get_change="RequisitesRUS")
-                                                         )
-
         if message:
             await message.delete()
 
@@ -463,5 +467,130 @@ class AdminForm:
                 pass
 
             if state:
-                if await state.get_state() == "AdminState:COMMISSION":
-                    pass
+                if await state.get_state() == "AdminState:REQUISITES":
+                    CONFIGTEXT.RequisitesBYN.TEXT = f"{message.text}"
+                    await message.answer(text="Вы успешно изменили текст",
+                                         reply_markup=await AdminForm.start_ikb())
+                    await state.finish()
+
+                elif await state.get_state() == "AdminState:COMMISSIONSale":
+                    if message.text.isdigit():
+                        CONFIG.COMMISSION.COMMISSION_SALES = int(message.text)
+                        await message.answer(text=f"Вы успешно изменили Комиссию Продажи "
+                                                  f"на <code>{int(message.text)}</code> %",
+                                             parse_mode="HTML",
+                                             reply_markup=await AdminForm.start_ikb())
+                        await state.finish()
+                    else:
+                        await message.answer(text="Введите число!")
+                        await AdminState.COMMISSIONSale
+
+                elif await state.get_state() == "AdminState:COMMISSIONBuy":
+                    if message.text.isdigit():
+                        CONFIG.COMMISSION.COMMISSION_BUY = int(message.text)
+                        await message.answer(text=f"Вы успешно изменили Комиссию Покупки на "
+                                                  f"<code>{int(message.text)}</code> %",
+                                             parse_mode="HTML",
+                                             reply_markup=await AdminForm.start_ikb())
+                        await state.finish()
+                    else:
+                        await message.answer(text="Введите число!")
+                        await AdminState.COMMISSIONBuy
+
+                elif await state.get_state() == "AdminState:MinBYN":
+                    if message.text.isdigit():
+                        CONFIG.COMMISSION.MIN_BYN = int(message.text)
+                        await message.answer(text=f"Вы успешно изменили Минимальную сумму "
+                                                  f"<code>{int(message.text)} BYN</code>!",
+                                             parse_mode='HTML',
+                                             reply_markup=await AdminForm.start_ikb())
+                        await state.finish()
+                    else:
+                        await message.answer(text='Введите число!')
+                        await AdminState.MinBYN.set()
+
+                elif await state.get_state() == "AdminState:Timer":
+                    if message.text.isdigit():
+                        CONFIG.PAYMENT_TIMER = int(message.text) * 60
+                        await message.answer(text=f"Вы успешно изменили Таймер "
+                                                  f"на <code>{int(message.text)}</code> минут(ы)",
+                                             reply_markup=await AdminForm.start_ikb(),
+                                             parse_mode="HTML")
+                        await state.finish()
+                    else:
+                        await message.answer(text="Введите число!")
+                        await AdminState.Timer.set()
+
+                elif await state.get_state() == "AdminState:FIRST_PAGE":
+                    CONFIGTEXT.FIRST_PAGE.TEXT = message.text
+                    await message.answer(text="Вы успешно изменили текст",
+                                         reply_markup=await AdminForm.start_ikb())
+                    await state.finish()
+
+                elif await state.get_state() == "AdminState:MAIN_FORM":
+                    CONFIGTEXT.MAIN_FORM.TEXT = message.text
+                    await message.answer(text="Вы успешно изменили текст",
+                                         reply_markup=await AdminForm.start_ikb())
+                    await state.finish()
+
+                elif await state.get_state() == "AdminState:WALLET":
+                    CONFIGTEXT.Wallet.TEXT = message.text
+                    await message.answer(text=f"Вы успешно изменили реквизиты для перевода Bitcoin\n"
+                                              f"<code>{message.text}</code>\n\n",
+                                         parse_mode="HTML",
+                                         reply_markup=await AdminForm.start_ikb())
+                    await state.finish()
+
+                elif await state.get_state() == "AdminState:NewsletterText":
+                    try:
+                        get_state = await state.get_data()
+                        if int(get_state['id']) == 1:
+                            await message.answer(text="Выберите картинку")
+                            await state.update_data(caption=message.text)
+                            await AdminState.NewsletterPhoto.set()
+                        else:
+                            users = await CRUDUsers.get_all()
+
+                            tasks = []
+                            for user in users:
+                                tasks.append(bot.send_message(chat_id=user.user_id,
+                                                              text=message.text,
+                                                              parse_mode="HTML"))
+                            await asyncio.gather(*tasks, return_exceptions=True)
+
+                            await state.finish()
+                    except Exception as e:
+                        print(e)
+
+                elif await state.get_state() == "AdminState:NewsletterPhoto":
+                    if message.content_type == "photo":
+                        try:
+                            state_id = await state.get_data()
+                            users = await CRUDUsers.get_all()
+                            if int(state_id['id']) == 1:
+                                tasks = []
+                                for user in users:
+                                    tasks.append(bot.send_photo(chat_id=user.user_id, photo=message.photo[2].file_id,
+                                                                caption=state_id['caption']))
+                                await asyncio.gather(*tasks, return_exceptions=True)
+                            else:
+                                tasks = []
+                                for user in users:
+                                    tasks.append(bot.send_photo(chat_id=user.user_id, photo=message.photo[2].file_id))
+                                await asyncio.gather(*tasks, return_exceptions=True)
+
+                        except Exception as e:
+                            print(e)
+
+                        await state.finish()
+                        await message.answer(text="Рассылка картинки прошла успешно",
+                                             reply_markup=await AdminForm.start_ikb()
+                                             )
+                    else:
+                        await message.answer(text="Это не картинка!\n"
+                                                  "Попробуйте еще раз",
+                                             reply_markup=await AdminForm.back_ikb(
+                                                 target="Newsletter",
+                                                 action="get_Newsletter")
+                                             )
+                        await AdminState.NewsletterPhoto.set()
