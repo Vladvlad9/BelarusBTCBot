@@ -354,7 +354,7 @@ class AdminForm:
                         commission = []
                         date = []
                         status = []
-                        moneyDifference = []
+                        moneydifference = []
 
                         for sale in sales:
                             user = await CRUDUsers.get(id=sale.user_id)
@@ -371,7 +371,7 @@ class AdminForm:
                             commission.append(sale.commission)
                             date.append(sale.date)
                             status.append(get_status)
-                            moneyDifference.append(sale.moneyDifference)
+                            moneydifference.append(sale.moneydifference)
 
                         df = pd.DataFrame({
                             'user_id': user_id,
@@ -381,7 +381,7 @@ class AdminForm:
                             'Продано': quantity,
                             'Монета': coin,
                             'Комиссия': commission,
-                            'Разница': moneyDifference,
+                            'Разница': moneydifference,
                             'ЕРИП': erip,
                             'Дата сделки': date,
                             'Статус': status
@@ -422,7 +422,7 @@ class AdminForm:
                             commission.append(sale.commission)
                             date.append(sale.date)
                             status.append(get_status)
-                            moneyDifference.append(sale.moneyDifference)
+                            moneyDifference.append(sale.moneydifference)
 
                         df = pd.DataFrame({
                             'id Пользователя': user_id,
