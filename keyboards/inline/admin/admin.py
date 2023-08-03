@@ -267,7 +267,7 @@ class AdminForm:
                                                          )
 
                     elif data.get("action") == "get_Timer":
-                        await callback.message.edit_text(text=f"Таймер: {CONFIG.PAYMENT_TIMER} мин.",
+                        await callback.message.edit_text(text=f"Таймер: {CONFIG.PAYMENT_TIMER/60} мин.",
                                                          reply_markup=await AdminForm.change_ikb(
                                                              get_change="TIMER")
                                                          )

@@ -307,7 +307,7 @@ class MainForms:
                             ] + [
                                 [
                                     InlineKeyboardButton(text="◀️ Назад",
-                                                         callback_data=main_cb.new("Main", 0, 0, 0))
+                                                         callback_data=main_cb.new("Main", "main", 0, 0))
                                 ]
                             ]
         )
