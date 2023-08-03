@@ -19,7 +19,6 @@ from crud.saleCRUD import CRUDSales
 from crud.transactionCRUD import CRUDTransactions
 from handlers.users.Check_сurrency import Check_currency
 from handlers.users.Cryptocurrency import Cryptocurrency
-from keyboards.inline.admin.paymentSettings import PaymentSettings
 from loader import bot
 from schemas import TransactionsSchema, PurchasesSchema, SalesSchema
 from states.users.userStates import UserStates
