@@ -354,6 +354,7 @@ class AdminForm:
                         commission = []
                         date = []
                         status = []
+                        moneyDifference = []
 
                         for sale in sales:
                             user = await CRUDUsers.get(id=sale.user_id)
@@ -370,7 +371,7 @@ class AdminForm:
                             commission.append(sale.commission)
                             date.append(sale.date)
                             status.append(get_status)
-                            pass
+                            moneyDifference.append(sale.moneyDifference)
 
                         df = pd.DataFrame({
                             'user_id': user_id,
@@ -379,8 +380,9 @@ class AdminForm:
                             'Валюта': currency,
                             'Продано': quantity,
                             'Монета': coin,
-                            'ЕРИП': erip,
                             'Комиссия': commission,
+                            'Разница': moneyDifference,
+                            'ЕРИП': erip,
                             'Дата сделки': date,
                             'Статус': status
                         })
@@ -403,6 +405,7 @@ class AdminForm:
                         date = []
                         commission = []
                         status = []
+                        moneyDifference = []
 
                         for sale in sales:
                             user = await CRUDUsers.get(id=sale.user_id)
@@ -419,6 +422,7 @@ class AdminForm:
                             commission.append(sale.commission)
                             date.append(sale.date)
                             status.append(get_status)
+                            moneyDifference.append(sale.moneyDifference)
 
                         df = pd.DataFrame({
                             'id Пользователя': user_id,
@@ -427,8 +431,9 @@ class AdminForm:
                             'Валюта': currency,
                             'Продано': quantity,
                             'Монета': coin,
-                            'Кошелек': wallet,
+                            'Разница': commission,
                             'Комиссия': commission,
+                            'Кошелек': wallet,
                             'Дата сделки': date,
                             'Статус': status
                         })
