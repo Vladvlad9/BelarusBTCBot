@@ -31,10 +31,14 @@ class Check_currency():
                 await UserStates.ERIP.set()
                 return text
             else:
+                # потом изменю!
+                newPrice = round(self.buy * float(CONFIG.COMMISSION.COMMISSION_SALES), 2)
+                moneyDifference = round(newPrice - self.buy, 2)
                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                       f"{self.buy} {self.currency[0]}\n\n" \
+                       f"{round(self.buy * float(CONFIG.COMMISSION.COMMISSION_SALES), 2)} {self.currency[0]}\n\n" \
                        f"Сумма к <b>продаже</b> <code>{self.amount}</code> {self.coin}"
-                pass
+                await state.update_data(moneyDifference=moneyDifference)
+                await state.update_data(buy=self.buy * float(CONFIG.COMMISSION.COMMISSION_SALES))
                 await UserStates.ERIP.set()
                 return text
         else:
@@ -45,8 +49,8 @@ class Check_currency():
 
                 if self.coin == "Bitcoin":
                     getUSD = round(float(self.amount) / byn, 3)
-                    get_BYN_Btc = round(getUSD / (price_BTC * 1.05), 6)
-
+                    get_BYN_Btc = round(getUSD / (price_BTC * float(CONFIG.COMMISSION.COMMISSION_BUY)), 6)
+                    moneyDifference: float = round(float(self.amount) - (float(get_BYN_Btc) * float(get_buy)), 2)
                     text = f"Сумма к получению: {get_BYN_Btc} {self.coin}\n" \
                            f"Сумма к оплате: {self.amount} {self.currency[0]}"
 
@@ -55,10 +59,11 @@ class Check_currency():
                                f"{get_BYN_Btc} {self.coin}"
 
                     await state.update_data(amount=float(get_BYN_Btc))
+                    await state.update_data(moneyDifference=moneyDifference)
                     await state.update_data(buy=self.amount)
 
                 else:
-                    get_BYN_Btc = round(float(self.amount) * (byn * 1.05), 3)
+                    get_BYN_Btc = round(float(self.amount) * (byn * float(CONFIG.COMMISSION.COMMISSION_BUY)), 3)
 
                     text = f"Сумма к получению: {self.amount} {self.coin}\n" \
                            f"Сумма к оплате: {get_BYN_Btc} {self.currency[0]}"
@@ -66,14 +71,9 @@ class Check_currency():
                     text_two = f"📝Введите {self.coin}-адрес кошелька," \
                                f"куда вы хотите отправить " \
                                f"{self.amount} {self.coin}"
-                #get_BYN_Btc: float = round(float(self.amount) / float(get_buy), 7)
 
                     await state.update_data(amount=self.amount)
                     await state.update_data(buy=float(get_BYN_Btc))
-
-                # text_two = f"📝Введите {self.coin}-адрес кошелька," \
-                #            f"куда вы хотите отправить " \
-                #            f"{get_BYN_Btc} {self.coin}"
 
                 await UserStates.Wallet.set()
                 return [text, text_two]

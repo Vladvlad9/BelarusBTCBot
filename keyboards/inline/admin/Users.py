@@ -154,7 +154,7 @@ class Users:
                             ] + [
                                 [
                                     InlineKeyboardButton(text="◀️ Назад",
-                                                         callback_data=user_cb.new("MainMenu", "", 0, 0, 0))
+                                                         callback_data=user_cb.new("MainMenu", 0, 0, 0, 0))
                                 ]
                             ]
         )

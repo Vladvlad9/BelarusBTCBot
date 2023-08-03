@@ -10,6 +10,8 @@ class PurchasesSchema(BaseModel):
     coin: str
     price_per_unit: float
     wallet: str
+    commission: str
+    moneyDifference: float = Field(default=0)
     date = Field(default=datetime.now())
     status: bool = Field(default=False)
 

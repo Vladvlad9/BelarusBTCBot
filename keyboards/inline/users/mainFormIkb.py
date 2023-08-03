@@ -281,7 +281,7 @@ class MainForms:
                     #                      callback_data=main_cb.new(target, action, "RUB", 0))
                 ],
                 [
-                    InlineKeyboardButton(text="◀️ Назад", callback_data=main_cb.new("Main", 0, 0, 0))
+                    InlineKeyboardButton(text="◀️ Назад", callback_data=main_cb.new("Main", "main", 0, 0))
                 ]
             ]
         )
@@ -330,8 +330,8 @@ class MainForms:
                             ] +
                             [
                                 [
-                                    InlineKeyboardButton(text="◀️ Назад", callback_data=main_cb.new("Main", 0, 0, 0))
-
+                                    InlineKeyboardButton(text="◀️ Назад",
+                                                         callback_data=main_cb.new("Main", "main", 0, 0))
                                 ]
 
                             ]
@@ -349,7 +349,7 @@ class MainForms:
                 ],
                 [
                     InlineKeyboardButton(text="◀️ Назад",
-                                         callback_data=main_cb.new("Main", 0, 0, 0))
+                                         callback_data=main_cb.new("Main", "main", 0, 0))
                 ]
             ]
         )
@@ -600,18 +600,27 @@ class MainForms:
                                                       currency=get_state_data['currency'],
                                                       amount=get_state_data['amount'])
 
-                            await state.update_data(buy=buy)
-
-                            check_currency = Check_currency(amount=get_state_data['amount'],
-                                                            abbreviation=abbreviation,
-                                                            exchange_type=get_state_data['exchangeType'],
-                                                            buy=buy,
-                                                            currency=get_state_data['currency'],
-                                                            coin=get_state_data['coin'])
-
                             if get_state_data['exchangeType'] == "sell":
+                                await state.update_data(buy=buy*float(CONFIG.COMMISSION.COMMISSION_SALES))
+
+                                check_currency = Check_currency(amount=get_state_data['amount'],
+                                                                abbreviation=abbreviation,
+                                                                exchange_type=get_state_data['exchangeType'],
+                                                                buy=buy,
+                                                                currency=get_state_data['currency'],
+                                                                coin=get_state_data['coin'])
+
                                 get_text = await check_currency.get_text_Buy(state=state)
                             else:
+                                await state.update_data(buy=buy)
+
+                                check_currency = Check_currency(amount=get_state_data['amount'],
+                                                                abbreviation=abbreviation,
+                                                                exchange_type=get_state_data['exchangeType'],
+                                                                buy=buy,
+                                                                currency=get_state_data['currency'],
+                                                                coin=get_state_data['coin'])
+
                                 get_text = await check_currency.get_text_Buy(integerNumber=True, state=state)
 
                             if get_text:
@@ -727,11 +736,14 @@ class MainForms:
                                 try:
                                     user = await CRUDUsers.get(user_id=message.from_user.id)
                                     get_state_data = await state.get_data()
+
                                     if get_state_data['exchangeType'] == "buy":
                                         purchase = await CRUDPurchases.add(purchase=PurchasesSchema(
                                             user_id=user.id,
                                             currency="BYN",
                                             purchase_id=1,
+                                            moneyDifference=get_state_data['moneyDifference'],
+                                            commission=CONFIG.COMMISSION.COMMISSION_BUY,
                                             quantity=float(get_state_data['amount']),
                                             coin=get_state_data['coin'],
                                             price_per_unit=float(get_state_data['buy']),
@@ -751,6 +763,8 @@ class MainForms:
                                             user_id=user.id,
                                             currency="BYN",
                                             sale_id=1,
+                                            moneyDifference=get_state_data['moneyDifference'],
+                                            commission=CONFIG.COMMISSION.COMMISSION_SALES,
                                             quantity=get_state_data['amount'],
                                             coin=get_state_data['coin'],
                                             price_per_unit=get_state_data['buy'],

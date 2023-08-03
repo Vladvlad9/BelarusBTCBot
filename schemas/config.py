@@ -7,8 +7,8 @@ class BotSchema(BaseModel):
 
 
 class CommissionSchema(BaseModel):
-    COMMISSION_BUY: int
-    COMMISSION_SALES: int
+    COMMISSION_BUY: str
+    COMMISSION_SALES: str
     MIN_BYN: int
     MIN_RUB: int
 

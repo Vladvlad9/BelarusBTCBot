@@ -1,4 +1,5 @@
 import asyncio
+import re
 
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message, InputFile
@@ -181,14 +182,14 @@ class AdminForm:
 
                     elif data.get("action") == "get_CommissionSale":
                         await callback.message.edit_text(text=f"Комиссия Продажи составляет "
-                                                              f"{int(CONFIG.COMMISSION.COMMISSION_SALES)}%",
+                                                              f"{CONFIG.COMMISSION.COMMISSION_SALES}%",
                                                          reply_markup=await AdminForm.change_ikb(
                                                              get_change="CommissionSale")
                                                          )
 
                     elif data.get("action") == "get_CommissionBuy":
                         await callback.message.edit_text(text=f"Комиссия покупки составляет "
-                                                              f"{int(CONFIG.COMMISSION.COMMISSION_BUY)}%",
+                                                              f"{CONFIG.COMMISSION.COMMISSION_BUY}%",
                                                          reply_markup=await AdminForm.change_ikb(
                                                              get_change="CommissionBuy")
                                                          )
@@ -207,13 +208,13 @@ class AdminForm:
                         text, target, action = "", "", ""
 
                         if get_change_data == "CommissionSale":
-                            text = "Введите новые данные для Комиссии Продажи"
+                            text = "Введите данные Комиссии для продажи в формате '1.__'"
                             target = "PaymentSetup"
                             action = "get_Setup"
                             await AdminState.COMMISSIONSale.set()
 
                         if get_change_data == "CommissionBuy":
-                            text = "Введите новые данные для Комиссии Покупки"
+                            text = "Введите данные Покупки для продажи в формате '1.__'"
                             target = "PaymentSetup"
                             action = "get_Setup"
                             await AdminState.COMMISSIONBuy.set()
@@ -350,11 +351,13 @@ class AdminForm:
                         erip = []
                         quantity = []
                         price_per_unit = []
+                        commission = []
                         date = []
                         status = []
 
                         for sale in sales:
                             user = await CRUDUsers.get(id=sale.user_id)
+                            get_status = "Не обработана" if sale.status else "Обработана"
 
                             user_id.append(user.user_id)
                             sale_id.append(sale.sale_id)
@@ -364,8 +367,10 @@ class AdminForm:
                             quantity.append(sale.quantity)
                             coin.append(sale.coin)
                             erip.append(sale.erip)
+                            commission.append(sale.commission)
                             date.append(sale.date)
-                            status.append(sale.status)
+                            status.append(get_status)
+                            pass
 
                         df = pd.DataFrame({
                             'user_id': user_id,
@@ -375,6 +380,7 @@ class AdminForm:
                             'Продано': quantity,
                             'Монета': coin,
                             'ЕРИП': erip,
+                            'Комиссия': commission,
                             'Дата сделки': date,
                             'Статус': status
                         })
@@ -395,10 +401,12 @@ class AdminForm:
                         quantity = []
                         price_per_unit = []
                         date = []
+                        commission = []
                         status = []
 
                         for sale in sales:
                             user = await CRUDUsers.get(id=sale.user_id)
+                            get_status = "Не обработана" if sale.status else "Обработана"
 
                             user_id.append(user.user_id)
                             purchase_id.append(sale.purchase_id)
@@ -408,8 +416,9 @@ class AdminForm:
                             quantity.append(sale.quantity)
                             coin.append(sale.coin)
                             wallet.append(sale.wallet)
+                            commission.append(sale.commission)
                             date.append(sale.date)
-                            status.append(sale.status)
+                            status.append(get_status)
 
                         df = pd.DataFrame({
                             'id Пользователя': user_id,
@@ -419,6 +428,7 @@ class AdminForm:
                             'Продано': quantity,
                             'Монета': coin,
                             'Кошелек': wallet,
+                            'Комиссия': commission,
                             'Дата сделки': date,
                             'Статус': status
                         })
@@ -474,22 +484,22 @@ class AdminForm:
                     await state.finish()
 
                 elif await state.get_state() == "AdminState:COMMISSIONSale":
-                    if message.text.isdigit():
-                        CONFIG.COMMISSION.COMMISSION_SALES = int(message.text)
+                    if re.match(r'^1\.[0-9]{2}$', message.text):
+                        CONFIG.COMMISSION.COMMISSION_SALES = message.text
                         await message.answer(text=f"Вы успешно изменили Комиссию Продажи "
-                                                  f"на <code>{int(message.text)}</code> %",
+                                                  f"на <code>{message.text}</code> %",
                                              parse_mode="HTML",
                                              reply_markup=await AdminForm.start_ikb())
                         await state.finish()
                     else:
-                        await message.answer(text="Введите число!")
+                        await message.answer(text="Неверно введены данные (1.__)")
                         await AdminState.COMMISSIONSale
 
                 elif await state.get_state() == "AdminState:COMMISSIONBuy":
-                    if message.text.isdigit():
-                        CONFIG.COMMISSION.COMMISSION_BUY = int(message.text)
+                    if re.match(r'^1\.[0-9]{2}$', message.text):
+                        CONFIG.COMMISSION.COMMISSION_BUY = message.text
                         await message.answer(text=f"Вы успешно изменили Комиссию Покупки на "
-                                                  f"<code>{int(message.text)}</code> %",
+                                                  f"<code>{message.text}</code> %",
                                              parse_mode="HTML",
                                              reply_markup=await AdminForm.start_ikb())
                         await state.finish()

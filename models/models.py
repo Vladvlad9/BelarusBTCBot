@@ -30,6 +30,8 @@ class Purchases(Base):
     price_per_unit = Column(Float)  # Цена за единицу
     date = Column(TIMESTAMP, default=datetime.now())  # Дата транзакции
     wallet = Column(Text, default=None)
+    commission = Column(String, default=None)
+    moneyDifference = Column(Float)
     status = Column(Boolean, default=False)  # Статус
 
     user = relationship('Users', backref='purchases')
@@ -47,6 +49,8 @@ class Sales(Base):
     price_per_unit = Column(Float)
     date = Column(TIMESTAMP, default=datetime.now())
     erip = Column(String(11), default=None)
+    commission = Column(String, default=None)
+    moneyDifference = Column(Float)
     status = Column(Boolean, default=False)
 
     user = relationship('Users', backref='sales')
