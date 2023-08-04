@@ -498,7 +498,7 @@ class AdminForm:
                         await state.finish()
                     else:
                         await message.answer(text="Неверно введены данные (1.__)")
-                        await AdminState.COMMISSIONSale
+                        await AdminState.COMMISSIONSale.set()
 
                 elif await state.get_state() == "AdminState:COMMISSIONBuy":
                     if re.match(r'^1\.[0-9]{2}$', message.text):
@@ -510,7 +510,7 @@ class AdminForm:
                         await state.finish()
                     else:
                         await message.answer(text="Введите число!")
-                        await AdminState.COMMISSIONBuy
+                        await AdminState.COMMISSIONBuy.set()
 
                 elif await state.get_state() == "AdminState:MinBYN":
                     if message.text.isdigit():
