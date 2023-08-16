@@ -48,8 +48,8 @@ class Check_currency():
                 get_buy: float = round(price_BTC * byn, 3)
 
                 if self.coin == "Bitcoin":
-                    getUSD = round(float(self.amount) / byn, 3)
-                    get_BYN_Btc = round(getUSD / (price_BTC * float(CONFIG.COMMISSION.COMMISSION_BUY)), 6)
+                    getUSD = round(float(self.amount) / byn, 3)  # Получаем доллары
+                    get_BYN_Btc = round(getUSD / (price_BTC * float(CONFIG.COMMISSION.COMMISSION_BUY)), 8)# тут 8 цифр
                     moneyDifference: float = round(float(self.amount) - (float(get_BYN_Btc) * float(get_buy)), 2)
                     text = f"Сумма к получению: {get_BYN_Btc} {self.coin}\n" \
                            f"Сумма к оплате: {self.amount} {self.currency[0]}"

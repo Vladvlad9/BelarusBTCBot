@@ -17,7 +17,7 @@ from states.users.userStates import UserStates
 from captcha.image import ImageCaptcha
 from random import choice
 from PIL import ImageFont, ImageDraw, Image
-
+from aiogram.utils.deep_linking import get_start_link
 
 async def create_captcha(text: str) -> str:
     image = Image.new('RGB', (200, 100), color='white')
@@ -57,6 +57,11 @@ async def registration_starts_state(message: types.Message, state: FSMContext):
 @dp.message_handler(commands=["start"])
 async def registration_start(message: types.Message):
     user = await CRUDUsers.get(user_id=message.from_user.id)
+    a = message.get_args()
+
+    args = message.get_args()
+    link = await get_start_link('foo')
+
     if user:
         if user.check_captcha:
             await message.delete()
