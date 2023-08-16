@@ -27,16 +27,15 @@ class Check_currency():
 
                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
                        f"{round(get_BYN_Btc, 2)} {self.coin}\n\n" \
-                       f"Сумма к <b>продаже</b> <code>{self.amount}</code> {self.coin}\n" \
-                       f"я тут"
+                       f"Сумма к <b>продаже</b> <code>{self.amount}</code> {self.coin}\n"
                 await UserStates.ERIP.set()
                 return text
             else:
                 # потом изменю!
-                newPrice = round(self.buy * float(CONFIG.COMMISSION.COMMISSION_SALES), 2)
+                newPrice = round(self.buy / float(CONFIG.COMMISSION.COMMISSION_SALES), 2)
                 moneyDifference = round(newPrice - self.buy, 2)
                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
-                       f"{round(self.buy * float(CONFIG.COMMISSION.COMMISSION_SALES), 2)} {self.currency[0]}\n\n" \
+                       f"{round(self.buy / float(CONFIG.COMMISSION.COMMISSION_SALES), 2)} {self.currency[0]}\n\n" \
                        f"Сумма к <b>продаже</b> <code>{self.amount}</code> {self.coin}"
                 await state.update_data(moneyDifference=moneyDifference)
                 await state.update_data(buy=self.buy * float(CONFIG.COMMISSION.COMMISSION_SALES))
@@ -53,7 +52,8 @@ class Check_currency():
                     get_BYN_Btc = round(getUSD / (price_BTC * float(CONFIG.COMMISSION.COMMISSION_BUY)), 8)# тут 8 цифр
                     moneyDifference: float = round(float(self.amount) - (float(get_BYN_Btc) * float(get_buy)), 2)
                     text = f"Сумма к получению: {get_BYN_Btc} {self.coin}\n" \
-                           f"Сумма к оплате: {self.amount} {self.currency[0]}"
+                           f"Сумма к оплате: {self.amount} {self.currency[0]}\n" \
+                           f"я тут"
 
                     text_two = f"📝Введите {self.coin}-адрес кошелька," \
                                f"куда вы хотите отправить " \
