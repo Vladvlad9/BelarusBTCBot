@@ -1,15 +1,17 @@
 {
   "BOT": {
-    "TOKEN": "",
+    "TOKEN": "5885935346:AAGfZxamM9X_rkR1AnF402bSDy-4U6ySks0",
     "ADMINS": [381252111, 1991572522]
   },
   "DATABASE": "postgres:postgres@localhost:5432/btcbot",
   "CAPTCHA": "",
   "COMMISSION": {
-    "COMMISSION_BUY": 5,
-    "COMMISSION_SALES": 25,
+    "COMMISSION_BUY": "1.05",
+    "COMMISSION_SALES": "1.25",
     "MIN_BYN": 50,
     "MIN_RUB": 1000
   },
-  "PAYMENT_TIMER": 15
+  "PAYMENT_TIMER": 15,
+  "CONSTID_Purchase": 449112,
+  "CONST_SALE": 549112
 }
