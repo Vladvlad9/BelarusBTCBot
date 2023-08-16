@@ -1,6 +1,6 @@
 {
   "BOT": {
-    "TOKEN": "5403620291:AAFrLZ_rbWzEDpU8Qja-Qgt6qzo2vSrmuAY",
+    "TOKEN": "",
     "ADMINS": [381252111, 1991572522]
   },
   "DATABASE": "postgres:postgres@localhost:5432/btcbot",
