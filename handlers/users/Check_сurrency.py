@@ -27,7 +27,8 @@ class Check_currency():
 
                 text = f"Введите <b>ЕРИП РБ</b> реквизиты, куда вы хотите получить " \
                        f"{round(get_BYN_Btc, 2)} {self.coin}\n\n" \
-                       f"Сумма к <b>продаже</b> <code>{self.amount}</code> {self.coin}"
+                       f"Сумма к <b>продаже</b> <code>{self.amount}</code> {self.coin}\n" \
+                       f"я тут"
                 await UserStates.ERIP.set()
                 return text
             else:
